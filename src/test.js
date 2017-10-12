@@ -19,6 +19,20 @@ export const test = (name, fn) => {
 	const assertRunning = action => assert.equal(action.getState(), "running")
 	const assertPassing = action => assert.equal(action.getState(), "passing")
 	const assertFailing = action => assert.equal(action.getState(), "failing")
+	const exit = () => {
+		process.exit(someHasFailed ? 1 : 0)
+	}
+	let waiting = false
+	const waitUntil = (allocatedMs = 100) => {
+		waiting = true
+		const timer = setTimeout(() => {
+			exit()
+		}, allocatedMs)
+		return () => {
+			clearTimeout(timer)
+			exit()
+		}
+	}
 
 	console.log(`test ${name}`)
 	fn({
@@ -29,7 +43,10 @@ export const test = (name, fn) => {
 		assertRunning,
 		assertPassing,
 		assertFailing,
-		assertResult
+		assertResult,
+		waitUntil
 	})
-	process.exit(someHasFailed ? 1 : 0)
+	if (waiting === false) {
+		exit()
+	}
 }

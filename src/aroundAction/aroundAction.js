@@ -6,7 +6,7 @@ export const aroundAction = (before, actionCreator, after) => {
 			return result
 		},
 		result => {
-			after(result, true)
+			after(result, false)
 			return result
 		}
 	)

@@ -12,6 +12,7 @@ export const all = iterable =>
 			results[index] = result
 			passedCount++
 			if (failedOrPassed === false && passedCount === callCount) {
+				failedOrPassed = true
 				pass(results)
 			}
 		}
@@ -40,4 +41,3 @@ export const all = iterable =>
 			pass(results)
 		}
 	})
-// all(["foo", "bar"]).then(console.log)

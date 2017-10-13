@@ -1,7 +1,7 @@
 import { isAction } from "../action.js"
 import { fromFunction } from "../fromFunction/fromFunction.js"
 
-export const all = iterable =>
+export const all = (iterable, createActionFromValue = v => v) =>
 	fromFunction(({ fail, pass }) => {
 		let callCount = 0
 		let passedCount = 0
@@ -32,7 +32,7 @@ export const all = iterable =>
 
 		let index = 0
 		for (const value of iterable) {
-			run(value, index)
+			run(createActionFromValue(value), index)
 			callCount++
 			index++
 		}

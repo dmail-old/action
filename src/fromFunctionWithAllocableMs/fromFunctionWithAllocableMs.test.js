@@ -22,7 +22,9 @@ test("fromFunctionWithAllocableMs.js", ({ waitUntil, assert }) => {
 		({ allocateMs, getAllocatedMs, getConsumedMs, getRemainingMs }) => {
 			assert.equal(getConsumedMs(), undefined)
 			assert.equal(getRemainingMs(), Infinity)
+			assert.equal(getAllocatedMs(), Infinity)
 
+			allocateMs(Infinity)
 			assert.equal(getAllocatedMs(), Infinity)
 			allocateMs(-1)
 			assert.equal(getAllocatedMs(), Infinity)
@@ -30,7 +32,6 @@ test("fromFunctionWithAllocableMs.js", ({ waitUntil, assert }) => {
 			assert.equal(getAllocatedMs(), Infinity)
 
 			allocateMs(1)
-
 			assert.equal(getConsumedMs(), 0)
 			assert.equal(getRemainingMs(), 1)
 		}

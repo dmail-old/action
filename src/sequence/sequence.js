@@ -1,6 +1,8 @@
 import { isAction } from "../action.js"
 import { fromFunction } from "../fromFunction/fromFunction.js"
 
+// ptet supprimer fn, maintenant qu'on a mapIterable non?
+// surtout qu'on utilisera surement composeSequence et pas sequence directement du coup
 export const sequence = (iterable, fn = v => v) =>
 	fromFunction(({ pass, fail }) => {
 		const iterator = iterable[Symbol.iterator]()
@@ -29,4 +31,3 @@ export const sequence = (iterable, fn = v => v) =>
 		}
 		iterate()
 	})
-// sequence(["a", "b"]).then(console.log)

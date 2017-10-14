@@ -2,6 +2,7 @@ export const withAllocableMs = ({ fail, then }) => {
 	let timeoutid
 	let allocatedMs = Infinity
 	let startMs
+	let endMs
 	const cancelTimeout = () => {
 		if (timeoutid !== undefined) {
 			clearTimeout(timeoutid)
@@ -10,6 +11,8 @@ export const withAllocableMs = ({ fail, then }) => {
 	}
 	const allocateMs = ms => {
 		allocatedMs = ms < 0 ? Infinity : ms
+		startMs = undefined
+		endMs = undefined
 		cancelTimeout()
 		if (ms !== Infinity) {
 			startMs = Date.now()
@@ -19,10 +22,22 @@ export const withAllocableMs = ({ fail, then }) => {
 			)
 		}
 	}
-	const getConsumedMs = () => (startMs === undefined ? undefined : Date.now() - startMs)
+	const getConsumedMs = () => {
+		if (startMs === undefined) {
+			return undefined
+		}
+		if (endMs === undefined) {
+			return Date.now() - startMs
+		}
+		return endMs - startMs
+	}
 	const getAllocatedMs = () => allocatedMs
 	const getRemainingMs = () => (allocatedMs === Infinity ? Infinity : allocatedMs - getConsumedMs())
-	then(cancelTimeout, cancelTimeout)
+	const onEnded = () => {
+		endMs = Date.now()
+		cancelTimeout()
+	}
+	then(onEnded, onEnded)
 
 	return { allocateMs, getAllocatedMs, getConsumedMs, getRemainingMs }
 }

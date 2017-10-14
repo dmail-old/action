@@ -6,38 +6,21 @@ import {
 } from "./composeWithAllocatedMs.js"
 
 test("composeWithAllocableMs.js", ({ ensure, assert }) => {
-	ensure("by default compositeAction is given infinite ms", () => {
-		const action = composeSequenceWithAllocatedMs([0])
-		assert.equal(action.getRemainingMs(), Infinity)
-	})
-
-	ensure("compositeAction is given the allocatedMs", () => {
-		const compositeAction = composeSequenceWithAllocatedMs([0], undefined, 10)
-		const compositeActionRemainingMs = compositeAction.getRemainingMs()
-
-		assert.equal(typeof compositeActionRemainingMs, "number")
-		assert(compositeActionRemainingMs < 11)
-	})
-
 	ensure("each composed action is allocated the compositeAction remainingMs", () => {
 		const firstAction = createAction()
 		const secondAction = createAction()
-		const compositeAction = composeSequenceWithAllocatedMs(
-			[firstAction, secondAction],
-			undefined,
-			10
-		)
+		composeSequenceWithAllocatedMs([firstAction, secondAction], undefined, 10)
 
 		const firstActionRemainingMs = firstAction.getRemainingMs()
 		assert.equal(typeof firstActionRemainingMs, "number")
-		assert(firstActionRemainingMs <= compositeAction.getRemainingMs())
+		assert(firstActionRemainingMs <= 10)
 
 		assert.equal(secondAction.getRemainingMs, undefined) // because first action is running
 		firstAction.pass()
 
 		const secondActionRemainingMs = secondAction.getRemainingMs()
 		assert.equal(typeof secondActionRemainingMs, "number")
-		assert(secondActionRemainingMs <= compositeAction.getRemainingMs())
+		assert(secondActionRemainingMs <= firstAction.getRemainingMs())
 	})
 
 	ensure("handle always receive an action as first arg", () => {

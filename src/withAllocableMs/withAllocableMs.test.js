@@ -35,6 +35,7 @@ test("withAllocableMs.js", ({ waitUntil, assert }) => {
 	assert.equal(tooLongAction.getRemainingMs(), 1)
 
 	setTimeout(() => {
+		assert(tooLongAction.getConsumedMs() > 0)
 		assert.equal(tooLongAction.getState(), "failed")
 		assert.equal(tooLongAction.getResult(), `must pass or fail in less than 1ms`)
 		done()

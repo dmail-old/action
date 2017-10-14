@@ -33,14 +33,14 @@ test("compose.js", ({ ensure, assert, assertPassed, assertFailed }) => {
 	})
 
 	ensure("composeSequence complex example", () => {
-		const action = composeSequence([0, 1, 2], ({ value, index, pass, fail }) => {
+		const action = composeSequence([0, 1, 2], (action, value, index) => {
 			if (index === 0) {
-				return pass(value)
+				return passed(value)
 			}
 			if (index === 1) {
-				return fail(value + 1)
+				return failed(value + 1)
 			}
-			return pass(value + 1)
+			return passed(value + 1)
 		})
 		assert.deepEqual(action.getResult(), [
 			{ state: "passed", result: 0 },
@@ -53,9 +53,9 @@ test("compose.js", ({ ensure, assert, assertPassed, assertFailed }) => {
 		const firstAction = createAction()
 		const secondAction = createAction()
 		let callCount = 0
-		composeSequence([0, 1], ({ index }) => {
+		composeSequence([firstAction, secondAction], action => {
 			callCount++
-			return index === 0 ? firstAction : secondAction
+			return action
 		})
 		assert.equal(callCount, 1)
 		firstAction.pass()
@@ -64,9 +64,9 @@ test("compose.js", ({ ensure, assert, assertPassed, assertFailed }) => {
 
 	ensure("composeTogether called concurrently", () => {
 		let callCount = 0
-		composeTogether([0, 1], action => {
+		composeTogether([0, 1], () => {
 			callCount++
-			return action
+			return createAction()
 		})
 		assert.equal(callCount, 2)
 	})

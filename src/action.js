@@ -44,7 +44,7 @@ export const createAction = () => {
 	}
 	const pass = value => {
 		if (isPassing() || isPassed()) {
-			throw new Error(`pass must be called once`)
+			throw new Error(`pass must be called once, it was already called with ${result}`)
 		}
 		if (isFailed()) {
 			throw new Error(`pass must not be called after fail was called`)

@@ -155,4 +155,36 @@ test("action.js", ({ ensure, assert, assertPassed, assertFailed, assertResult })
 		assertFailed(nextAction)
 		assertResult(nextAction, value)
 	})
+
+	ensure("action.mixin add property to action", () => {
+		const action = createAction()
+		const foo = () => {}
+		action.mixin({ foo })
+		assert.equal(action.foo, foo)
+	})
+
+	ensure("action.mixin throw on existing property", () => {
+		const action = createAction()
+		assert.throws(() => action.mixin({ pass: () => {} }))
+	})
+
+	ensure("action mixin with a function", () => {
+		const action = createAction()
+		let firstArg
+		const foo = () => {}
+		action.mixin(arg => {
+			firstArg = arg
+			return { foo }
+		})
+		assert.equal(firstArg, action)
+		assert.equal(action.foo, foo)
+	})
+
+	ensure("action mixin can return null", () => {
+		createAction().mixin(() => null)
+	})
+
+	ensure("action mixin returning non object are ignored", () => {
+		createAction().mixin(() => true)
+	})
 })

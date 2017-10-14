@@ -1,22 +1,22 @@
-import { fromFunctionWithAllocableMs } from "../fromFunctionWithAllocableMs/fromFunctionWithAllocableMs.js"
+import { fromFunction } from "../fromFunction/fromFunction.js"
+import { withAllocableMs } from "../withAllocableMs/withAllocableMs.js"
 import { compose } from "../compose/compose.js"
 
-const fromFunctionWithAllocatedMs = (fn, allocatedMs) =>
-	fromFunctionWithAllocableMs(action => {
-		action.allocateMs(allocatedMs)
-		return fn(action)
-	})
+const defaultHandle = ({ value, pass }) => pass(value)
 
 export const composeWithAllocableMs = (
 	iterable,
-	{ handle = (v, { pass }) => pass(v), how, allocatedMs = Infinity } = {}
+	{ handle = defaultHandle, how, allocatedMs = Infinity } = {}
 ) =>
-	fromFunctionWithAllocatedMs(
-		({ getRemainingMs }) =>
-			compose(iterable, {
-				handle: value =>
-					fromFunctionWithAllocatedMs(action => handle(value, action), getRemainingMs()),
-				how
-			}),
-		allocatedMs
-	)
+	fromFunction(action => {
+		action.mixin(withAllocableMs)
+		action.allocateMs(allocatedMs)
+		return compose(iterable, {
+			handle: composedAction => {
+				composedAction.mixin(withAllocableMs)
+				composedAction.allocateMs(action.getRemainingMs())
+				return handle(composedAction)
+			},
+			how
+		})
+	})

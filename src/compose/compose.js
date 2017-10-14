@@ -3,29 +3,29 @@ import { all } from "../all/all.js"
 import { sequence } from "../sequence/sequence.js"
 import { passed } from "../passed/passed.js"
 import { failed } from "../failed/failed.js"
+import { mutateAction } from "../fromFunction/fromFunction.js"
 
 import { mapIterable } from "../mapIterable.js"
 
-const defaultHandle = value => value
+const defaultHandle = ({ value, pass }) => pass(value)
 
-export const compose = (iterable, { handle = defaultHandle, how }) => {
-	const mapAction = (value, index) => {
-		const action = createAction()
-		return passed(handle(value, { index, iterable, action })).then(
+export const compose = (iterable, { handle = defaultHandle, composer }) => {
+	const map = (value, index) =>
+		mutateAction(createAction().mixin({ value, index, iterable }), handle).then(
 			result => ({ state: "passed", result }),
 			// transform failed into passed so that sequence & all does not stop on first failure
 			result => passed({ state: "failed", result })
 		)
-	}
 
-	iterable = mapIterable(iterable, mapAction)
+	iterable = mapIterable(iterable, map)
 
-	return how(iterable).then(
+	return composer(iterable).then(
 		// but once are done, refails it when needed
 		reports => (reports.some(({ state }) => state === "failed") ? failed(reports) : passed(reports))
 	)
 }
 
-export const composeSequence = (iterable, handle) => compose(iterable, { how: sequence, handle })
+export const composeSequence = (iterable, handle) =>
+	compose(iterable, { composer: sequence, handle })
 
-export const composeTogether = (iterable, handle) => compose(iterable, { how: all, handle })
+export const composeTogether = (iterable, handle) => compose(iterable, { composer: all, handle })

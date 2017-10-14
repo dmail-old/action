@@ -1,5 +1,5 @@
 import { test } from "../test.js"
-import { isAction, createAction } from "../action.js"
+import { createAction } from "../action.js"
 import { passed } from "../passed/passed.js"
 import { failed } from "../failed/failed.js"
 import { composeSequence, composeTogether } from "./compose.js"
@@ -33,18 +33,15 @@ test("compose.js", ({ ensure, assert, assertPassed, assertFailed }) => {
 	})
 
 	ensure("composeSequence complex example", () => {
-		let composedAction
-		const action = composeSequence([0, 1, 2], (value, { index, action }) => {
-			composedAction = action
+		const action = composeSequence([0, 1, 2], ({ value, index, pass, fail }) => {
 			if (index === 0) {
-				return value
+				return pass(value)
 			}
 			if (index === 1) {
-				return failed(value + 1)
+				return fail(value + 1)
 			}
-			return passed(value + 1)
+			return pass(value + 1)
 		})
-		assert(isAction(composedAction))
 		assert.deepEqual(action.getResult(), [
 			{ state: "passed", result: 0 },
 			{ state: "failed", result: 2 },
@@ -56,7 +53,7 @@ test("compose.js", ({ ensure, assert, assertPassed, assertFailed }) => {
 		const firstAction = createAction()
 		const secondAction = createAction()
 		let callCount = 0
-		composeSequence([0, 1], (value, { index }) => {
+		composeSequence([0, 1], ({ index }) => {
 			callCount++
 			return index === 0 ? firstAction : secondAction
 		})
@@ -67,9 +64,9 @@ test("compose.js", ({ ensure, assert, assertPassed, assertFailed }) => {
 
 	ensure("composeTogether called concurrently", () => {
 		let callCount = 0
-		composeTogether([0, 1], () => {
+		composeTogether([0, 1], action => {
 			callCount++
-			return createAction()
+			return action
 		})
 		assert.equal(callCount, 2)
 	})

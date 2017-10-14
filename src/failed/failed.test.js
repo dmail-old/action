@@ -1,8 +1,8 @@
 import { test } from "../test.js"
-import { createAction } from "../action.js"
+import { passed } from "../passed/passed.js"
 import { failed } from "./failed.js"
 
-test("failed.js", ({ ensure, assertFailed, assertPassed, assertResult }) => {
+test("failed.js", ({ ensure, assert, assertFailed, assertResult }) => {
 	ensure("failed return an action failed with the value", () => {
 		const value = 1
 		const action = failed(value)
@@ -11,20 +11,14 @@ test("failed.js", ({ ensure, assertFailed, assertPassed, assertResult }) => {
 	})
 
 	ensure("failed with failed action", () => {
-		const failedAction = createAction()
-		const value = 1
-		failedAction.fail(value)
+		const failedAction = failed()
 		const action = failed(failedAction)
-		assertFailed(action)
-		assertResult(action, value)
+		assert.equal(action, failedAction)
 	})
 
 	ensure("failed with passed action", () => {
-		const passedAction = createAction()
-		const value = 1
-		passedAction.pass(value)
+		const passedAction = passed()
 		const action = failed(passedAction)
-		assertPassed(action)
-		assertResult(action, value)
+		assert.equal(action, passedAction)
 	})
 })

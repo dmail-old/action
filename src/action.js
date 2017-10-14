@@ -80,8 +80,24 @@ export const createAction = () => {
 	}
 	const getState = () => state
 	const getResult = () => result
+	const mixin = (...args) => {
+		// maybe allow only function, add use defineProperty to make them non enumerable ?
+		args.forEach(arg => {
+			let properties = typeof arg === "function" ? arg(action) : arg
+			if (properties && typeof properties === "object") {
+				Object.keys(properties).forEach(property => {
+					if (action.hasOwnProperty(property)) {
+						throw new Error(`action mixin error: ${property} property exists`)
+					}
+					action[property] = properties[property]
+				})
+			}
+		})
+		return action
+	}
 
-	Object.assign(action, {
+	return mixin(action, {
+		mixin,
 		getState,
 		getResult,
 		isPassing,
@@ -94,8 +110,6 @@ export const createAction = () => {
 		fail,
 		then
 	})
-
-	return action
 }
 
 // passed("foo").then(console.log)

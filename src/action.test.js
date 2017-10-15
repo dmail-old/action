@@ -1,7 +1,8 @@
 import { test } from "./test.js"
 import { createAction } from "./action.js"
+import { assertPassed, assertFailed, assertResult } from "./assertions.js"
 
-test("action.js", ({ ensure, assert, assertPassed, assertFailed, assertResult }) => {
+test("action.js", ({ ensure, assert }) => {
 	ensure("action.pass(itself) throw", () => {
 		const action = createAction()
 		assert.throws(() => {

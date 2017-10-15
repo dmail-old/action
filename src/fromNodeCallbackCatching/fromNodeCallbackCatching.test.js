@@ -1,7 +1,8 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { fromNodeCallbackCatching } from "./fromNodeCallbackCatching.js"
+import { assert, assertPassed, assertResult } from "../assertions.js"
 
-test("fromNodeCallbackCatching.js", ({ ensure, assert, assertPassed, assertResult }) => {
+test("fromNodeCallbackCatching.js", ({ ensure }) => {
 	const nodeCallbackError = (error, callback) => callback(error)
 	const nodeCallbackSuccess = (value, callback) => callback(null, value)
 

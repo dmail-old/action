@@ -1,8 +1,9 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
 import { sequence } from "./sequence.js"
+import { assert, assertPassed, assertFailed, assertResult } from "../assertions.js"
 
-test("sequence.js", ({ ensure, assert, assertPassed, assertFailed, assertResult }) => {
+test("sequence.js", ({ ensure }) => {
 	ensure("with only values", () => {
 		const firstValue = "foo"
 		const secondValue = "bar"

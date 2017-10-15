@@ -1,8 +1,9 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
 import { aroundAction } from "./aroundAction.js"
+import { assert, assertPassed, assertFailed, assertResult } from "../assertions.js"
 
-test("aroundAction.js", ({ ensure, assert, assertPassed, assertFailed, assertResult }) => {
+test("aroundAction.js", ({ ensure }) => {
 	ensure("on passed action", () => {
 		let beforeArgs
 		const before = (...args) => {

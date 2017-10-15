@@ -1,7 +1,8 @@
-import { test } from "../test.js"
+import { test } from "@dmaiL/test-cheap"
 import { fromPromise } from "./fromPromise.js"
+import { assert } from "../assertions.js"
 
-test("fromPromise.js", ({ assert, waitUntil }) => {
+test("fromPromise.js", ({ waitUntil }) => {
 	const done = waitUntil()
 
 	const passException = 1

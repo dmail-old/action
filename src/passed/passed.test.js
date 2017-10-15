@@ -1,8 +1,9 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { failed } from "../failed/failed.js"
 import { passed } from "./passed.js"
+import { assert, assertPassed, assertResult } from "../assertions.js"
 
-test("passed.js", ({ ensure, assert, assertPassed, assertResult }) => {
+test("passed.js", ({ ensure }) => {
 	ensure("passed return an action passed with the value", () => {
 		const value = 1
 		const action = passed(value)

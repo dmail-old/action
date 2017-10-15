@@ -1,8 +1,9 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
 import { withAllocableMs } from "./withAllocableMs.js"
+import { assert } from "../assertions.js"
 
-test("withAllocableMs.js", ({ waitUntil, assert }) => {
+test("withAllocableMs.js", ({ waitUntil }) => {
 	const done = waitUntil()
 	const createActionWithAllocableMs = () => createAction().mixin(withAllocableMs)
 

@@ -1,10 +1,11 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
 import { passed } from "../passed/passed.js"
 import { failed } from "../failed/failed.js"
 import { composeSequence, composeTogether } from "./compose.js"
+import { assert, assertPassed, assertFailed } from "../assertions.js"
 
-test("compose.js", ({ ensure, assert, assertPassed, assertFailed }) => {
+test("compose.js", ({ ensure }) => {
 	ensure("composeSequence with values", () => {
 		const action = composeSequence([0, 1])
 		assertPassed(action)

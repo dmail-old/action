@@ -1,8 +1,9 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
 import { mapFailed } from "./mapFailed.js"
+import { assert, assertFailed, assertResult } from "../assertions.js"
 
-test("mapFailed.js", ({ ensure, assert, assertFailed, assertResult }) => {
+test("mapFailed.js", ({ ensure }) => {
 	ensure("transforms failure value", () => {
 		const action = createAction()
 		const value = 1

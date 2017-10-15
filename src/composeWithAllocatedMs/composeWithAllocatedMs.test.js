@@ -1,11 +1,12 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { createAction, isAction } from "../action.js"
 import {
 	composeSequenceWithAllocatedMs,
 	composeTogetherWithAllocatedMs
 } from "./composeWithAllocatedMs.js"
+import { assert } from "../assertions.js"
 
-test("composeWithAllocableMs.js", ({ ensure, assert }) => {
+test("composeWithAllocableMs.js", ({ ensure }) => {
 	ensure("each composed action is allocated the compositeAction remainingMs", () => {
 		const firstAction = createAction()
 		const secondAction = createAction()

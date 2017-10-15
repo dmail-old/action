@@ -1,7 +1,8 @@
-import { test } from "../test.js"
+import { test } from "@dmail/test-cheap"
 import { fromFunction } from "./fromFunction.js"
+import { assert, assertPassed, assertFailed, assertResult } from "../assertions.js"
 
-test("fromFunction.js", ({ ensure, assert, assertPassed, assertFailed, assertResult }) => {
+test("fromFunction.js", ({ ensure }) => {
 	ensure("function returning resolved thenable pass action", () => {
 		const value = 1
 		const thenable = {

@@ -31,14 +31,14 @@ test("withAllocableMs.js", ({ waitUntil }) => {
 	tooLongAction.allocateMs(-2)
 	assert.equal(tooLongAction.getAllocatedMs(), Infinity)
 
-	tooLongAction.allocateMs(1)
-	assert.equal(tooLongAction.getConsumedMs(), 0)
-	assert.equal(tooLongAction.getRemainingMs(), 1)
+	tooLongAction.allocateMs(10)
+	assert(tooLongAction.getConsumedMs() <= 5)
+	assert(tooLongAction.getRemainingMs() >= 10)
 
 	setTimeout(() => {
 		assert(tooLongAction.getConsumedMs() > 0)
 		assert.equal(tooLongAction.getState(), "failed")
-		assert.equal(tooLongAction.getResult(), `must pass or fail in less than 1ms`)
+		assert.equal(tooLongAction.getResult(), `must pass or fail in less than 10ms`)
 		done()
-	}, 20)
+	}, 50)
 })

@@ -1,4 +1,4 @@
-import { test } from "@dmaiL/test-cheap"
+import { test } from "@dmail/test-cheap"
 import { fromPromise } from "./fromPromise.js"
 import { assert } from "../assertions.js"
 

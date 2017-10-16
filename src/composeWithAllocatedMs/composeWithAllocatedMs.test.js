@@ -12,7 +12,7 @@ test("composeWithAllocableMs.js", ({ ensure }) => {
 		const secondAction = createAction()
 		composeSequenceWithAllocatedMs([firstAction, secondAction], undefined, 10)
 
-		const firstActionRemainingMs = firstAction.getRemainingMs()
+		let firstActionRemainingMs = firstAction.getRemainingMs()
 		assert.equal(typeof firstActionRemainingMs, "number")
 		assert(firstActionRemainingMs <= 10)
 
@@ -21,7 +21,8 @@ test("composeWithAllocableMs.js", ({ ensure }) => {
 
 		const secondActionRemainingMs = secondAction.getRemainingMs()
 		assert.equal(typeof secondActionRemainingMs, "number")
-		assert(secondActionRemainingMs <= firstAction.getRemainingMs())
+		firstActionRemainingMs = firstAction.getRemainingMs()
+		assert(secondActionRemainingMs <= firstActionRemainingMs)
 	})
 
 	ensure("handle always receive an action as first arg", () => {

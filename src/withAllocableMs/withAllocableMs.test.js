@@ -1,44 +1,60 @@
 import { test } from "@dmail/test-cheap"
+import { install } from "lolex"
 import { createAction } from "../action.js"
 import { withAllocableMs } from "./withAllocableMs.js"
 import { assert } from "../assertions.js"
 
-test("withAllocableMs.js", ({ waitUntil }) => {
-	const done = waitUntil()
+test("withAllocableMs.js", ({ ensure }) => {
+	const clock = install()
+	clock.tick(15)
+
 	const createActionWithAllocableMs = () => createAction().mixin(withAllocableMs)
 
-	const actionPassedQuickly = createActionWithAllocableMs()
-	actionPassedQuickly.allocateMs(1)
-	actionPassedQuickly.pass()
-	assert.equal(actionPassedQuickly.getState(), "passed")
+	ensure("an action passed fast enough", () => {
+		const actionPassedQuickly = createActionWithAllocableMs()
+		actionPassedQuickly.allocateMs(1)
+		actionPassedQuickly.pass()
+		assert.equal(actionPassedQuickly.getState(), "passed")
+	})
 
-	const failedValue = 2
-	const actionFailedQuickly = createActionWithAllocableMs()
-	actionFailedQuickly.allocateMs(1)
-	actionFailedQuickly.fail(failedValue)
-	assert.equal(actionFailedQuickly.getState(), "failed")
-	assert.equal(actionFailedQuickly.getResult(), failedValue)
+	ensure("an action failed fast enough", () => {
+		const failedValue = 2
+		const actionFailedQuickly = createActionWithAllocableMs()
+		actionFailedQuickly.allocateMs(1)
+		actionFailedQuickly.fail(failedValue)
+		assert.equal(actionFailedQuickly.getState(), "failed")
+		assert.equal(actionFailedQuickly.getResult(), failedValue)
+	})
 
-	const tooLongAction = createActionWithAllocableMs()
-	assert.equal(tooLongAction.getConsumedMs(), undefined)
-	assert.equal(tooLongAction.getRemainingMs(), Infinity)
-	assert.equal(tooLongAction.getAllocatedMs(), Infinity)
+	ensure("an action still pending after allocatedMs", () => {
+		const tooLongAction = createActionWithAllocableMs()
+		assert.equal(tooLongAction.getConsumedMs(), undefined)
+		assert.equal(tooLongAction.getRemainingMs(), Infinity)
+		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
 
-	tooLongAction.allocateMs(Infinity)
-	assert.equal(tooLongAction.getAllocatedMs(), Infinity)
-	tooLongAction.allocateMs(-1)
-	assert.equal(tooLongAction.getAllocatedMs(), Infinity)
-	tooLongAction.allocateMs(-2)
-	assert.equal(tooLongAction.getAllocatedMs(), Infinity)
+		tooLongAction.allocateMs(Infinity)
+		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
+		tooLongAction.allocateMs(-1)
+		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
+		tooLongAction.allocateMs(-2)
+		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
 
-	tooLongAction.allocateMs(10)
-	assert(tooLongAction.getConsumedMs() <= 5)
-	assert(tooLongAction.getRemainingMs() >= 10)
+		const allocatedMs = 10
+		const consumedMs = 2
 
-	setTimeout(() => {
-		assert(tooLongAction.getConsumedMs() > 0)
+		tooLongAction.allocateMs(allocatedMs)
+		assert.equal(tooLongAction.getConsumedMs(), 0)
+		assert.equal(tooLongAction.getRemainingMs(), allocatedMs)
+
+		clock.tick(consumedMs)
+		assert.equal(tooLongAction.getConsumedMs(), consumedMs)
+		assert.equal(tooLongAction.getRemainingMs(), allocatedMs - consumedMs)
+
+		clock.tick(allocatedMs - consumedMs)
+		assert.equal(tooLongAction.getConsumedMs(), allocatedMs)
 		assert.equal(tooLongAction.getState(), "failed")
 		assert.equal(tooLongAction.getResult(), `must pass or fail in less than 10ms`)
-		done()
-	}, 50)
+	})
+
+	clock.uninstall()
 })

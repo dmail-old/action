@@ -1,21 +1,41 @@
-import { reduceIterable } from "../mapIterable.js"
+import { passed } from "../passed/passed.js"
+import { fromFunction } from "../fromFunction/fromFunction.js"
 
-export const reduce = (
-	iterable,
-	reducer = (accumulator, value) => value(accumulator),
-	initialValue
-) =>
-	reduceIterable(
-		iterable,
-		(accumulator, value, index, iterable) => {
-			// si on retourne une action il faudrais alors attendre que l'action se termine
-			// et passer cette valeur au prochain
-			// sequence ne suffit pas ici
-			// je suis pas sur de comment obtenir ce qu'on veut
-			// en fait il faut commencer à itérer sur l'iterable
-			// apeller le reducer
-			// lorsque c'est une action faudrais attendre la fin de l'action avant d'itérer sur le suivant
-			// autrement dit on peut pas utiliser sequence
-		},
-		initialValue
-	)
+export const reduce = (iterable, reducer, initialValue) =>
+	fromFunction(() => {
+		const iterator = iterable[Symbol.iterator]()
+		let index = 0
+		let reducedValue
+		let { done, value } = iterator.next()
+
+		if (done) {
+			if (initialValue === undefined) {
+				throw new Error("reduce called on empty iterable without initialValue")
+			}
+			return passed(initialValue)
+		}
+		if (initialValue === undefined) {
+			reducedValue = passed(value)
+
+			const nextResult = iterator.next()
+			if (nextResult.done) {
+				return reducedValue
+			}
+			value = nextResult.value
+			index++
+		} else {
+			reducedValue = passed(initialValue)
+		}
+
+		const iterate = currentValue =>
+			reducedValue.then(result => {
+				reducedValue = passed(reducer(result, currentValue, index, iterable))
+				index++
+				const { value, done } = iterator.next()
+				if (done) {
+					return reducedValue
+				}
+				return iterate(value)
+			})
+		return iterate(value)
+	})

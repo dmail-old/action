@@ -32,6 +32,7 @@ export const mapIterable = (iterable, fn) =>
 		})
 	})
 
+/* istanbul ignore next: unused for now */
 export const reduceIterable = (iterable, fn, initialValue) =>
 	createIterable(() => {
 		let index = 0

@@ -1,6 +1,7 @@
 import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
-import { sequence } from "./sequence.js"
+import { sequence, chainFunctions } from "./sequence.js"
+import { passed } from "../passed/passed.js"
 import { assert, assertPassed, assertFailed, assertResult } from "../assertions.js"
 
 test("sequence.js", ({ ensure }) => {
@@ -39,5 +40,23 @@ test("sequence.js", ({ ensure }) => {
 
 		assertPassed(action)
 		assertResult(action, value + 1)
+	})
+
+	ensure("chainFunctions calls function with previous result", () => {
+		const action = chainFunctions([() => passed(10), previous => passed(previous + 1)])
+		assertPassed(action)
+		assertResult(action, 11)
+	})
+
+	ensure("chainFunctions first function can be called with an initialValue", () => {
+		const action = chainFunctions([value => passed(value)], 10)
+		assertPassed(action)
+		assertResult(action, 10)
+	})
+
+	ensure("chainFunctions with empty array", () => {
+		const action = chainFunctions([], 10)
+		assertPassed(action)
+		assertResult(action, 10)
 	})
 })

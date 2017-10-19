@@ -41,7 +41,15 @@ test("fromPromise.js", ({ waitUntil }) => {
 		})
 		setTimeout(() => {
 			assert.equal(caughtException, failException)
-			done()
+
+			let result
+			fromPromise(Promise.resolve(10)).then(arg => {
+				result = arg
+			})
+			setTimeout(() => {
+				assert.equal(result, 10)
+				done()
+			}, 20)
 		}, 20)
 	}, 20)
 })

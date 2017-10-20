@@ -6,8 +6,6 @@ import { assert } from "../assertions.js"
 
 test("withAllocableMs.js", ({ ensure }) => {
 	const clock = install()
-	clock.tick(15)
-
 	const createActionWithAllocableMs = () => createAction().mixin(withAllocableMs)
 
 	ensure("an action passed fast enough", () => {
@@ -54,6 +52,22 @@ test("withAllocableMs.js", ({ ensure }) => {
 		assert.equal(tooLongAction.getConsumedMs(), allocatedMs)
 		assert.equal(tooLongAction.getState(), "failed")
 		assert.equal(tooLongAction.getResult(), `must pass or fail in less than 10ms`)
+	})
+
+	ensure("an action call pass too late", () => {
+		const action = createActionWithAllocableMs()
+		action.allocateMs(10)
+		setTimeout(action.pass, 11)
+		clock.tick(10)
+		assert.doesNotThrow(() => clock.tick(1))
+	})
+
+	ensure("an action call fail too late", () => {
+		const action = createActionWithAllocableMs()
+		action.allocateMs(10)
+		setTimeout(action.fail, 11)
+		clock.tick(10)
+		assert.doesNotThrow(() => clock.tick(1))
 	})
 
 	clock.uninstall()

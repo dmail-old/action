@@ -3,6 +3,8 @@ export const isAction = value => value && typeof value.then === "function"
 export const createAction = () => {
 	let state = "unknown"
 	let result
+	let willShortCircuit = false
+	let ignoreNext = false
 
 	const action = {}
 	const isPassing = () => state === "passing"
@@ -34,6 +36,14 @@ export const createAction = () => {
 		}
 	}
 	const fail = value => {
+		if (ignoreNext) {
+			ignoreNext = false
+			return
+		}
+		if (willShortCircuit) {
+			ignoreNext = true
+			willShortCircuit = false
+		}
 		if (isFailed() || isFailing()) {
 			throw new Error(`fail must be called once, it was already called with ${result}`)
 		}
@@ -43,6 +53,14 @@ export const createAction = () => {
 		handleResult(value, false)
 	}
 	const pass = value => {
+		if (ignoreNext) {
+			ignoreNext = false
+			return
+		}
+		if (willShortCircuit) {
+			ignoreNext = true
+			willShortCircuit = false
+		}
 		if (isPassing() || isPassed()) {
 			throw new Error(`pass must be called once, it was already called with ${result}`)
 		}
@@ -80,6 +98,10 @@ export const createAction = () => {
 	}
 	const getState = () => state
 	const getResult = () => result
+	const shortcircuit = (fn, value) => {
+		willShortCircuit = true
+		return fn(value)
+	}
 	const mixin = (...args) => {
 		// maybe allow only function, add use defineProperty to make them non enumerable ?
 		args.forEach(arg => {
@@ -108,6 +130,7 @@ export const createAction = () => {
 		// isEnded,
 		pass,
 		fail,
+		shortcircuit,
 		then
 	})
 }

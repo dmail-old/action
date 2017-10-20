@@ -25,6 +25,44 @@ test("action.js", ({ ensure }) => {
 		})
 	})
 
+	ensure("action.shortcircuit(action.pass) prevent next pass throw", () => {
+		const action = createAction()
+		action.shortcircuit(action.pass, "foo")
+		assertPassed(action)
+		assertResult(action, "foo")
+		assert.doesNotThrow(action.pass)
+		assert.throws(action.pass)
+		assert.throws(action.fail)
+		assertResult(action, "foo")
+	})
+
+	ensure("action.shortcircuit(action.fail) prevent next fail throw", () => {
+		const action = createAction()
+		action.shortcircuit(action.fail, "foo")
+		assertFailed(action)
+		assertResult(action, "foo")
+		assert.doesNotThrow(action.fail)
+		assert.throws(action.pass)
+		assert.throws(action.fail)
+		assertResult(action, "foo")
+	})
+
+	ensure("action.shortcircuit(action.pass) prevent next fail throw", () => {
+		const action = createAction()
+		action.shortcircuit(action.pass)
+		assert.doesNotThrow(action.fail)
+		assert.throws(action.pass)
+		assert.throws(action.fail)
+	})
+
+	ensure("action.shortcircuit(action.fail) prevent next pass throw", () => {
+		const action = createAction()
+		action.shortcircuit(action.fail)
+		assert.doesNotThrow(action.pass)
+		assert.throws(action.pass)
+		assert.throws(action.fail)
+	})
+
 	ensure("action.fail throw when called more than once", () => {
 		const action = createAction()
 		action.fail()

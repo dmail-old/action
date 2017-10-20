@@ -1,4 +1,4 @@
-export const withAllocableMs = ({ fail, then }) => {
+export const withAllocableMs = ({ fail, shortcircuit, then }) => {
 	let timeoutid
 	let allocatedMs = Infinity
 	let startMs
@@ -17,7 +17,7 @@ export const withAllocableMs = ({ fail, then }) => {
 		if (ms !== Infinity) {
 			startMs = Date.now()
 			timeoutid = setTimeout(
-				() => fail(`must pass or fail in less than ${allocatedMs}ms`),
+				() => shortcircuit(fail, `must pass or fail in less than ${allocatedMs}ms`),
 				allocatedMs
 			)
 		}

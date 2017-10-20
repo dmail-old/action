@@ -1,36 +1,44 @@
-import { test } from "@dmail/test-cheap"
-import { createAction, isAction } from "../action.js"
 import {
 	composeSequenceWithAllocatedMs,
 	composeTogetherWithAllocatedMs
 } from "./composeWithAllocatedMs.js"
+import { test } from "@dmail/test-cheap"
+import { createAction, isAction } from "../action.js"
 import { assert } from "../assertions.js"
+import { install } from "lolex"
 
 test("composeWithAllocableMs.js", ({ ensure }) => {
 	ensure("each composed action is allocated the compositeAction remainingMs", () => {
+		const clock = install()
+
 		const firstAction = createAction()
 		const secondAction = createAction()
-		composeSequenceWithAllocatedMs([firstAction, secondAction], undefined, 10)
+		composeSequenceWithAllocatedMs([firstAction, secondAction], {
+			allocatedMs: 10
+		})
 
 		let firstActionRemainingMs = firstAction.getRemainingMs()
-		assert.equal(typeof firstActionRemainingMs, "number")
-		assert(firstActionRemainingMs <= 10)
+		assert.equal(firstActionRemainingMs, 10)
 
 		assert.equal(secondAction.getRemainingMs, undefined) // because first action is running
+		clock.tick(2)
 		firstAction.pass()
+		assert.equal(secondAction.getRemainingMs(), 8)
 
-		const secondActionRemainingMs = secondAction.getRemainingMs()
-		assert.equal(typeof secondActionRemainingMs, "number")
-		firstActionRemainingMs = firstAction.getRemainingMs()
-		assert(secondActionRemainingMs <= firstActionRemainingMs)
+		secondAction.allocateMs(20)
+		assert.equal(secondAction.getRemainingMs(), 20 + 8)
+
+		clock.uninstall()
 	})
 
 	ensure("handle always receive an action as first arg", () => {
 		const action = createAction()
 		const calls = []
 		const iterable = [1, action]
-		composeTogetherWithAllocatedMs(iterable, (...args) => {
-			calls.push(args)
+		composeTogetherWithAllocatedMs(iterable, {
+			handle: (...args) => {
+				calls.push(args)
+			}
 		})
 		assert.equal(calls.length, 2)
 

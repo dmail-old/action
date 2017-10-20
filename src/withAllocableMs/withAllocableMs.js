@@ -1,3 +1,6 @@
+export const failureIsOutOfMs = failure =>
+	typeof failure === "string" && failure.startsWith("must pass or fail in less")
+
 export const withAllocableMs = ({ fail, shortcircuit, then }) => {
 	let timeoutid
 	let allocatedMs = Infinity
@@ -10,11 +13,14 @@ export const withAllocableMs = ({ fail, shortcircuit, then }) => {
 		}
 	}
 	const allocateMs = ms => {
-		allocatedMs = ms < 0 ? Infinity : ms
+		if (ms < 0) {
+			throw new TypeError(`ms must be a positive number (got ${ms})`)
+		}
+		allocatedMs = ms
 		startMs = undefined
 		endMs = undefined
 		cancelTimeout()
-		if (ms !== Infinity) {
+		if (allocatedMs !== Infinity) {
 			startMs = Date.now()
 			timeoutid = setTimeout(
 				() => shortcircuit(fail, `must pass or fail in less than ${allocatedMs}ms`),

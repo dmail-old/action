@@ -9,14 +9,17 @@ import { mapIterable } from "../mapIterable.js"
 
 const defaultHandle = (_, value) => passed(value)
 
-const compose = (iterable, { handle = defaultHandle, composer }) => {
+const compose = (
+	iterable,
+	{ handle = defaultHandle, composer, failureIsCritical = () => false }
+) => {
 	const map = (value, index) =>
 		mutateAction(isAction(value) ? value : createAction(), action =>
 			handle(action, value, index, iterable)
 		).then(
 			result => ({ state: "passed", result }),
 			// transform failed into passed so that sequence & all does not stop on first failure
-			result => passed({ state: "failed", result })
+			result => (failureIsCritical(result) ? result : passed({ state: "failed", result }))
 		)
 
 	iterable = mapIterable(iterable, map)
@@ -27,7 +30,8 @@ const compose = (iterable, { handle = defaultHandle, composer }) => {
 	)
 }
 
-export const composeSequence = (iterable, handle) =>
-	compose(iterable, { composer: sequence, handle })
+export const composeSequence = (iterable, params) =>
+	compose(iterable, Object.assign({ composer: sequence }, params))
 
-export const composeTogether = (iterable, handle) => compose(iterable, { composer: all, handle })
+export const composeTogether = (iterable, params) =>
+	compose(iterable, Object.assign({ composer: all }, params))

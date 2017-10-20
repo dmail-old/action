@@ -1,7 +1,7 @@
 import { test } from "@dmail/test-cheap"
 import { install } from "lolex"
 import { createAction } from "../action.js"
-import { withAllocableMs } from "./withAllocableMs.js"
+import { withAllocableMs, failureIsOutOfMs } from "./withAllocableMs.js"
 import { assert } from "../assertions.js"
 
 test("withAllocableMs.js", ({ ensure }) => {
@@ -32,9 +32,7 @@ test("withAllocableMs.js", ({ ensure }) => {
 
 		tooLongAction.allocateMs(Infinity)
 		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
-		tooLongAction.allocateMs(-1)
-		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
-		tooLongAction.allocateMs(-2)
+		assert.throws(() => tooLongAction.allocateMs(-1))
 		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
 
 		const allocatedMs = 10
@@ -59,6 +57,7 @@ test("withAllocableMs.js", ({ ensure }) => {
 		action.allocateMs(10)
 		setTimeout(action.pass, 11)
 		clock.tick(10)
+		assert(failureIsOutOfMs(action.getResult()))
 		assert.doesNotThrow(() => clock.tick(1))
 	})
 
@@ -67,6 +66,7 @@ test("withAllocableMs.js", ({ ensure }) => {
 		action.allocateMs(10)
 		setTimeout(action.fail, 11)
 		clock.tick(10)
+		assert(failureIsOutOfMs(action.getResult()))
 		assert.doesNotThrow(() => clock.tick(1))
 	})
 

@@ -3,7 +3,7 @@ import { createAction } from "../action.js"
 import { passed } from "../passed/passed.js"
 import { failed } from "../failed/failed.js"
 import { composeSequence, composeTogether } from "./compose.js"
-import { assert, assertPassed, assertFailed } from "../assertions.js"
+import { assert, assertPassed, assertFailed, assertResult } from "../assertions.js"
 
 test("compose.js", ({ ensure }) => {
 	ensure("composeSequence with values", () => {
@@ -33,15 +33,25 @@ test("compose.js", ({ ensure }) => {
 		])
 	})
 
+	ensure("composeSequence with critical failure", () => {
+		const action = composeSequence([failed(0), failed(1), passed(2)], {
+			failureIsCritical: failure => failure === 1
+		})
+		assertFailed(action)
+		assertResult(action, 1)
+	})
+
 	ensure("composeSequence complex example", () => {
-		const action = composeSequence([0, 1, 2], (action, value, index) => {
-			if (index === 0) {
-				return passed(value)
+		const action = composeSequence([0, 1, 2], {
+			handle: (action, value, index) => {
+				if (index === 0) {
+					return passed(value)
+				}
+				if (index === 1) {
+					return failed(value + 1)
+				}
+				return passed(value + 1)
 			}
-			if (index === 1) {
-				return failed(value + 1)
-			}
-			return passed(value + 1)
 		})
 		assert.deepEqual(action.getResult(), [
 			{ state: "passed", result: 0 },
@@ -54,9 +64,11 @@ test("compose.js", ({ ensure }) => {
 		const firstAction = createAction()
 		const secondAction = createAction()
 		let callCount = 0
-		composeSequence([firstAction, secondAction], action => {
-			callCount++
-			return action
+		composeSequence([firstAction, secondAction], {
+			handle: action => {
+				callCount++
+				return action
+			}
 		})
 		assert.equal(callCount, 1)
 		firstAction.pass()
@@ -65,9 +77,11 @@ test("compose.js", ({ ensure }) => {
 
 	ensure("composeTogether called concurrently", () => {
 		let callCount = 0
-		composeTogether([0, 1], () => {
-			callCount++
-			return createAction()
+		composeTogether([0, 1], {
+			handle: () => {
+				callCount++
+				return createAction()
+			}
 		})
 		assert.equal(callCount, 2)
 	})

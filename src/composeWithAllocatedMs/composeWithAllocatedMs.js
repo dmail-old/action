@@ -1,5 +1,5 @@
 import { passed } from "../passed/passed.js"
-import { withAllocableMs } from "../withAllocableMs/withAllocableMs.js"
+import { withAllocableMs, failureIsOutOfMs } from "../withAllocableMs/withAllocableMs.js"
 import { composeSequence, composeTogether } from "../compose/compose.js"
 
 const defaultHandle = (_, value) => passed(value)
@@ -9,16 +9,22 @@ const composeWithAllocatedMs = (
 	{ handle = defaultHandle, composer, allocatedMs = Infinity }
 ) => {
 	let previousAction
-	return composer(iterable, (composedAction, value, index) => {
-		composedAction.mixin(withAllocableMs)
-		composedAction.allocateMs(index === 0 ? allocatedMs : previousAction.getRemainingMs())
-		previousAction = composedAction
-		return handle(composedAction, value, index, iterable)
+	return composer(iterable, {
+		handle: (composedAction, value, index) => {
+			composedAction.mixin(withAllocableMs)
+			composedAction.allocateMs(index === 0 ? allocatedMs : previousAction.getRemainingMs())
+			const allocateMs = composedAction.allocateMs
+			composedAction.allocateMs = allocatedMs =>
+				allocateMs(composedAction.getRemainingMs() + allocatedMs)
+			previousAction = composedAction
+			return handle(composedAction, value, index, iterable)
+		},
+		failureIsCritical: failureIsOutOfMs
 	})
 }
 
-export const composeSequenceWithAllocatedMs = (iterable, handle, allocatedMs) =>
-	composeWithAllocatedMs(iterable, { handle, composer: composeSequence, allocatedMs })
+export const composeSequenceWithAllocatedMs = (iterable, params) =>
+	composeWithAllocatedMs(iterable, Object.assign({ composer: composeSequence }, params))
 
-export const composeTogetherWithAllocatedMs = (iterable, handle, allocatedMs) =>
-	composeWithAllocatedMs(iterable, { handle, composer: composeTogether, allocatedMs })
+export const composeTogetherWithAllocatedMs = (iterable, params) =>
+	composeWithAllocatedMs(iterable, Object.assign({ composer: composeTogether }, params))

@@ -32,8 +32,6 @@ test("withAllocableMs.js", ({ ensure }) => {
 
 		tooLongAction.allocateMs(Infinity)
 		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
-		assert.throws(() => tooLongAction.allocateMs(-1))
-		assert.equal(tooLongAction.getAllocatedMs(), Infinity)
 
 		const allocatedMs = 10
 		const consumedMs = 2
@@ -68,6 +66,45 @@ test("withAllocableMs.js", ({ ensure }) => {
 		clock.tick(10)
 		assert(failureIsOutOfMs(action.getResult()))
 		assert.doesNotThrow(() => clock.tick(1))
+	})
+
+	ensure("allocateMs called with negative ms", () => {
+		const action = createActionWithAllocableMs()
+		action.allocateMs(-1)
+		assert.equal(action.getState(), "failed")
+		assert(failureIsOutOfMs(action.getResult()))
+	})
+
+	ensure("allocateMs() throw when action is passed", () => {
+		const action = createActionWithAllocableMs()
+		action.pass()
+		assert.throws(() => action.allocateMs(10))
+	})
+
+	ensure("allocateMs() throw when action is failed", () => {
+		const action = createActionWithAllocableMs()
+		action.fail()
+		assert.throws(() => action.allocateMs(10))
+	})
+
+	ensure("increaseAllocatedMs", () => {
+		const clock = install()
+		const action = createActionWithAllocableMs()
+		action.allocateMs(10)
+		clock.tick(5)
+		action.increaseAllocatedMs(20)
+		assert.equal(action.getAllocatedMs(), 25)
+		clock.uninstall()
+	})
+
+	ensure("decreaseAllocatedMs", () => {
+		const clock = install()
+		const action = createActionWithAllocableMs()
+		action.allocateMs(30)
+		clock.tick(5)
+		action.decreaseAllocatedMs(10)
+		assert.equal(action.getAllocatedMs(), 15)
+		clock.uninstall()
 	})
 
 	clock.uninstall()

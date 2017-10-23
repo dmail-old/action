@@ -12,7 +12,7 @@ export const createAction = () => {
 	const isPassed = () => state === "passed"
 	const isFailed = () => state === "failed"
 	const isRunning = () => state === "unknown" || isPassing() || isFailing()
-	// const isEnded = () => isPassed() || isFailed()
+	const isEnded = () => isPassed() || isFailed()
 	const pendingActions = []
 
 	const runPendingActions = () => {
@@ -127,7 +127,7 @@ export const createAction = () => {
 		isPassed,
 		isFailed,
 		isRunning,
-		// isEnded,
+		isEnded,
 		pass,
 		fail,
 		shortcircuit,

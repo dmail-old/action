@@ -43,20 +43,20 @@ test("sequence.js", ({ ensure }) => {
 	})
 
 	ensure("chainFunctions calls function with previous result", () => {
-		const action = chainFunctions([() => passed(10), previous => passed(previous + 1)])
+		const action = chainFunctions(() => passed(10), previous => passed(previous + 1))
 		assertPassed(action)
 		assertResult(action, 11)
 	})
 
 	ensure("chainFunctions first function can be called with an initialValue", () => {
-		const action = chainFunctions([value => passed(value)], 10)
+		const action = chainFunctions(() => 10, value => passed(value))
 		assertPassed(action)
 		assertResult(action, 10)
 	})
 
-	ensure("chainFunctions with empty array", () => {
-		const action = chainFunctions([], 10)
+	ensure("chainFunctions without argument", () => {
+		const action = chainFunctions()
 		assertPassed(action)
-		assertResult(action, 10)
+		assertResult(action, undefined)
 	})
 })

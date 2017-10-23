@@ -1,6 +1,6 @@
 import { isAction } from "../action.js"
 import { fromFunction } from "../fromFunction/fromFunction.js"
-import { mapIterable } from "../mapIterable.js"
+import { passed } from "../passed/passed.js"
 
 // ptet supprimer fn, maintenant qu'on a mapIterable non?
 // surtout qu'on utilisera surement composeSequence et pas sequence directement du coup
@@ -33,14 +33,5 @@ export const sequence = (iterable, fn = v => v) =>
 		iterate()
 	})
 
-export const chainFunctions = (iterable, initialValue) => {
-	let previousValue = initialValue
-	return sequence(
-		mapIterable(iterable, fn =>
-			fn(previousValue).then(result => {
-				previousValue = result
-				return result
-			})
-		)
-	).then(results => (results.length === 0 ? initialValue : results[results.length - 1]))
-}
+export const chainFunctions = (firstFunction = () => {}, ...remainingFunctions) =>
+	remainingFunctions.reduce((accumulator, fn) => accumulator.then(fn), passed(firstFunction()))

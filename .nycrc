@@ -3,6 +3,9 @@
     "dist/index.js",
     "dist/**"
   ],
+  "reporter": [
+    "lcov"
+  ],
   "exclude": [
     "dist/**/*.test.*",
     "dist/src/assertions.js"

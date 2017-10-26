@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@dmail/command": "0.1.1",
 		"@dmail/ensure": "0.0.2",
-		"@dmail/prettiest": "0.1.4",
+		"@dmail/prettiest": "0.1.5",
 		"@dmail/shared-config": "1.1.1",
 		"@dmail/test-cheap": "0.0.2",
 		"babel-cli": "7.0.0-beta.0",

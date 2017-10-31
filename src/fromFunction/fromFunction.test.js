@@ -27,8 +27,18 @@ test("fromFunction.js", ({ ensure }) => {
 		assertResult(action, value)
 	})
 
-	ensure("function can return the action itself", () => {
-		const action = fromFunction(action => action)
+	ensure("function returning a value", () => {
+		const value = 1
+		const action = fromFunction(() => value)
 		assert.equal(action.getState(), "unknown")
+	})
+
+	ensure("function throwing", () => {
+		const exception = 1
+		assert.throws(() =>
+			fromFunction(() => {
+				throw exception
+			})
+		)
 	})
 })

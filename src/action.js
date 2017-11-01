@@ -1,3 +1,7 @@
+// more or less equivalent to
+// http://folktale.origamitower.com/api/v2.0.0/en/folktale.result.html
+// http://folktale.origamitower.com/api/v2.0.0/en/folktale.validation.html
+
 export const isAction = value => value && typeof value.then === "function"
 
 export const createAction = () => {

@@ -1,6 +1,8 @@
+import { any } from "./any.js"
 import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
-import { any } from "./any.js"
+import { passed } from "../passed/passed.js"
+import { failed } from "../failed/failed.js"
 import { assertPassed, assertFailed, assertResult } from "../assertions.js"
 
 test("any.js", ({ ensure }) => {
@@ -62,5 +64,27 @@ test("any.js", ({ ensure }) => {
 		assertResult(action, value)
 		secondAction.fail()
 		assertResult(action, value)
+	})
+
+	ensure("fails with last failure", () => {
+		const action = any([failed(0), failed(1), failed(2)])
+		assertFailed(action)
+		assertResult(action, 2)
+	})
+
+	ensure("pass even if passed surrounded by failure", () => {
+		const action = any([failed(0), passed(1), failed(2)])
+		assertPassed(action)
+		assertResult(action, 1)
+	})
+
+	ensure("multiple disordonned failure", () => {
+		const first = createAction()
+		const second = createAction()
+		const action = any([first, second])
+		second.fail(0)
+		first.fail(1)
+		assertFailed(action)
+		assertResult(action, 1)
 	})
 })

@@ -3,17 +3,27 @@ import { fromFunction } from "../fromFunction/fromFunction.js"
 
 export const any = iterable =>
 	fromFunction(({ fail, pass }) => {
-		let failedOrPassed = false
+		let running = true
+		let someHasFailed = false
+		let lastFailure
+		let count = 0
+		let endedCount = 0
 		const compositePass = value => {
-			if (failedOrPassed === false) {
-				failedOrPassed = true
+			endedCount++
+			if (running) {
+				running = false
 				pass(value)
 			}
 		}
 		const compositeFail = value => {
-			if (failedOrPassed === false) {
-				failedOrPassed = true
-				fail(value)
+			endedCount++
+			if (running) {
+				lastFailure = value
+				someHasFailed = true
+				if (endedCount === count) {
+					running = false
+					fail(lastFailure)
+				}
 			}
 		}
 
@@ -24,8 +34,14 @@ export const any = iterable =>
 				compositePass(value)
 			}
 
-			if (failedOrPassed) {
+			if (running === false) {
 				break
 			}
+			count++
+		}
+
+		if (endedCount === count && running && someHasFailed) {
+			running = false
+			fail(lastFailure)
 		}
 	})

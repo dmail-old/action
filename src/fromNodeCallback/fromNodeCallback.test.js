@@ -17,7 +17,7 @@ test("fromNodeCallback.js", ({ ensure }) => {
 		const exception = 1
 		assert.throws(
 			() => fromNodeCallback(nodeCallbackError)(exception),
-			error => error === exception
+			(error) => error === exception,
 		)
 	})
 })

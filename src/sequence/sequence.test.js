@@ -36,20 +36,20 @@ test("sequence.js", ({ ensure }) => {
 
 	ensure("second argument is used to dynamically create action/value", () => {
 		const value = 1
-		const action = sequence([value], v => v + 1)
+		const action = sequence([value], (v) => v + 1)
 
 		assertPassed(action)
 		assertResult(action, value + 1)
 	})
 
 	ensure("chainFunctions calls function with previous result", () => {
-		const action = chainFunctions(() => passed(10), previous => passed(previous + 1))
+		const action = chainFunctions(() => passed(10), (previous) => passed(previous + 1))
 		assertPassed(action)
 		assertResult(action, 11)
 	})
 
 	ensure("chainFunctions first function can be called with an initialValue", () => {
-		const action = chainFunctions(() => 10, value => passed(value))
+		const action = chainFunctions(() => 10, (value) => passed(value))
 		assertPassed(action)
 		assertResult(action, 10)
 	})

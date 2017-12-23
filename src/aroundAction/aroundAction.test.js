@@ -1,6 +1,6 @@
+import { aroundAction } from "./aroundAction.js"
 import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
-import { aroundAction } from "./aroundAction.js"
 import { assert, assertPassed, assertFailed, assertResult } from "../assertions.js"
 
 test("aroundAction.js", ({ ensure }) => {
@@ -21,7 +21,7 @@ test("aroundAction.js", ({ ensure }) => {
 				action.pass(value)
 				return action
 			},
-			after
+			after,
 		)
 
 		assert.deepEqual(beforeArgs, [])
@@ -47,7 +47,7 @@ test("aroundAction.js", ({ ensure }) => {
 				action.fail(value)
 				return action
 			},
-			after
+			after,
 		)
 
 		assert.deepEqual(beforeArgs, [])

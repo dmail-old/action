@@ -1,12 +1,12 @@
-const createIterable = createIterator => {
+const createIterable = (createIterator) => {
 	return {
-		[Symbol.iterator]: createIterator
+		[Symbol.iterator]: createIterator,
 	}
 }
 
-const createIterator = next => {
+const createIterator = (next) => {
 	return {
-		next
+		next,
 	}
 }
 
@@ -27,7 +27,7 @@ export const mapIterable = (iterable, fn) =>
 			index++
 			return {
 				done,
-				value: mappedValue
+				value: mappedValue,
 			}
 		})
 	})
@@ -68,7 +68,7 @@ export const reduceIterable = (iterable, fn, initialValue) =>
 			index++
 			return {
 				done,
-				value: accumulator
+				value: accumulator,
 			}
 		})
 	})

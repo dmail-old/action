@@ -4,7 +4,7 @@ import { passed } from "../passed/passed.js"
 
 // ptet supprimer fn, maintenant qu'on a mapIterable non?
 // surtout qu'on utilisera surement composeSequence et pas sequence directement du coup
-export const sequence = (iterable, fn = v => v) =>
+export const sequence = (iterable, fn = (v) => v) =>
 	fromFunction(({ pass, fail }) => {
 		const iterator = iterable[Symbol.iterator]()
 		const results = []
@@ -17,13 +17,13 @@ export const sequence = (iterable, fn = v => v) =>
 			const valueModified = fn(value)
 			if (isAction(valueModified)) {
 				valueModified.then(
-					result => {
+					(result) => {
 						results.push(result)
 						iterate()
 					},
-					result => {
+					(result) => {
 						fail(result)
-					}
+					},
 				)
 			} else {
 				results.push(valueModified)

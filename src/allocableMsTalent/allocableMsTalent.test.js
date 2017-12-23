@@ -1,12 +1,12 @@
+import { allocableMsTalent, failureIsOutOfMs } from "./allocableMsTalent.js"
+import { createAction } from "../action.js"
+import { mixin } from "@dmail/mixin"
 import { test } from "@dmail/test-cheap"
 import { install } from "lolex"
-import { createAction } from "../action.js"
-import { withAllocableMs, failureIsOutOfMs } from "./withAllocableMs.js"
 import { assert } from "../assertions.js"
 
 test("withAllocableMs.js", ({ ensure }) => {
-	const clock = install()
-	const createActionWithAllocableMs = () => createAction().mixin(withAllocableMs)
+	const createActionWithAllocableMs = () => mixin(createAction(), allocableMsTalent)
 
 	ensure("an action passed fast enough", () => {
 		const actionPassedQuickly = createActionWithAllocableMs()
@@ -25,6 +25,7 @@ test("withAllocableMs.js", ({ ensure }) => {
 	})
 
 	ensure("an action still pending after allocatedMs", () => {
+		const clock = install()
 		const tooLongAction = createActionWithAllocableMs()
 		assert.equal(tooLongAction.getConsumedMs(), undefined)
 		assert.equal(tooLongAction.getRemainingMs(), Infinity)
@@ -48,24 +49,29 @@ test("withAllocableMs.js", ({ ensure }) => {
 		assert.equal(tooLongAction.getConsumedMs(), allocatedMs)
 		assert.equal(tooLongAction.getState(), "failed")
 		assert.equal(tooLongAction.getResult(), `must pass or fail in less than 10ms`)
+		clock.uninstall()
 	})
 
 	ensure("an action call pass too late", () => {
+		const clock = install()
 		const action = createActionWithAllocableMs()
 		action.allocateMs(10)
 		setTimeout(action.pass, 11)
 		clock.tick(10)
 		assert(failureIsOutOfMs(action.getResult()))
 		assert.doesNotThrow(() => clock.tick(1))
+		clock.uninstall()
 	})
 
 	ensure("an action call fail too late", () => {
+		const clock = install()
 		const action = createActionWithAllocableMs()
 		action.allocateMs(10)
 		setTimeout(action.fail, 11)
 		clock.tick(10)
 		assert(failureIsOutOfMs(action.getResult()))
 		assert.doesNotThrow(() => clock.tick(1))
+		clock.uninstall()
 	})
 
 	ensure("allocateMs called with negative ms", () => {
@@ -106,6 +112,4 @@ test("withAllocableMs.js", ({ ensure }) => {
 		assert.equal(action.getAllocatedMs(), 15)
 		clock.uninstall()
 	})
-
-	clock.uninstall()
 })

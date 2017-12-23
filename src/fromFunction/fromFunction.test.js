@@ -6,9 +6,9 @@ test("fromFunction.js", ({ ensure }) => {
 	ensure("function returning resolved thenable pass action", () => {
 		const value = 1
 		const thenable = {
-			then: onFulfill => {
+			then: (onFulfill) => {
 				onFulfill(value)
-			}
+			},
 		}
 		const action = fromFunction(() => thenable)
 		assertPassed(action)
@@ -20,7 +20,7 @@ test("fromFunction.js", ({ ensure }) => {
 		const thenable = {
 			then: (onFulfill, onReject) => {
 				onReject(value)
-			}
+			},
 		}
 		const action = fromFunction(() => thenable)
 		assertFailed(action)
@@ -38,7 +38,27 @@ test("fromFunction.js", ({ ensure }) => {
 		assert.throws(() =>
 			fromFunction(() => {
 				throw exception
-			})
+			}),
 		)
+	})
+
+	ensure("returning the action itself", () => {
+		const action = fromFunction((act) => act)
+		action.pass()
+		assert.equal(action.getState(), "passed")
+	})
+
+	ensure("returning an other passed action", () => {
+		const passedWith10 = fromFunction(({ pass }) => pass(10))
+		const action = fromFunction(() => passedWith10)
+		assert.equal(action.getState(), "passed")
+		assert.equal(action.getResult(), 10)
+	})
+
+	ensure("returning an other failed action", () => {
+		const failedWith10 = fromFunction(({ fail }) => fail(10))
+		const action = fromFunction(() => failedWith10)
+		assert.equal(action.getState(), "failed")
+		assert.equal(action.getResult(), 10)
 	})
 })

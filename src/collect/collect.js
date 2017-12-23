@@ -1,53 +1,73 @@
-import { isAction } from "../action.js"
-import { fromFunction } from "../fromFunction/fromFunction.js"
+import { allocableMsTalent, failureIsOutOfMs } from "../allocableMsTalent/allocableMsTalent.js"
+import { mixin } from "@dmail/mixin"
+import { createAction } from "../action"
+import { passed } from "../passed/passed.js"
+import { createIterator, compose } from "../compose/compose.js"
 
-export const collect = iterable =>
-	fromFunction(({ fail, pass }) => {
-		const results = []
-		let callCount = 0
-		let passedOrFailedCount = 0
-		let someHasFailed = false
+export const collectSequence = (iterable, { failureIsCritical = () => false } = {}) => {
+	const results = []
+	let someHasFailed = false
 
-		const checkEnded = () => {
-			passedOrFailedCount++
-			if (passedOrFailedCount === callCount) {
-				if (someHasFailed) {
-					fail(results)
-				} else {
-					pass(results)
+	return compose({
+		iterator: createIterator(iterable),
+		composer: ({ value, state, index, nextValue, done, fail, pass }) => {
+			if (index > -1) {
+				results.push({ state, result: value })
+			}
+			if (state === "failed") {
+				if (failureIsCritical(value)) {
+					return fail(value)
 				}
+				someHasFailed = true
 			}
-		}
-		const compositeOnPassed = (result, index) => {
-			results[index] = {
-				state: "passed",
-				result
+			if (done) {
+				if (someHasFailed) {
+					return fail(results)
+				}
+				return pass(results)
 			}
-			checkEnded()
-		}
-		const compositeOnFailed = (result, index) => {
-			results[index] = {
-				state: "failed",
-				result
-			}
-			checkEnded()
-		}
-		const run = (value, index) => {
-			if (isAction(value)) {
-				value.then(
-					result => compositeOnPassed(result, index),
-					result => compositeOnFailed(result, index)
-				)
-			} else {
-				compositeOnPassed(value, index)
-			}
-		}
-
-		let index = 0
-		for (const value of iterable) {
-			run(value, index)
-			callCount++
-			index++
-		}
-		checkEnded()
+			return nextValue
+		},
 	})
+}
+
+const createPassedActionWithAllocatedMs = (allocatedMs) => {
+	const action = mixin(createAction(), allocableMsTalent)
+	action.allocateMs(allocatedMs)
+	action.pass()
+	return action
+}
+
+export const collectSequenceWithAllocatedMs = (iterable, { allocatedMs = Infinity } = {}) => {
+	const results = []
+	let someHasFailed = false
+
+	return compose({
+		from: createPassedActionWithAllocatedMs(allocatedMs),
+		iterator: createIterator(iterable),
+		composer: ({ action, value, state, index, nextValue, done, fail, pass }) => {
+			if (index > -1) {
+				results.push({ state, result: value })
+			}
+			if (state === "failed") {
+				if (failureIsOutOfMs(value)) {
+					return fail(value)
+				}
+				someHasFailed = true
+			}
+			if (done) {
+				if (someHasFailed) {
+					return fail(results)
+				}
+				return pass(results)
+			}
+
+			const nextActionWithAllocableMs = mixin(passed(nextValue), allocableMsTalent)
+			nextActionWithAllocableMs.allocateMs(action.getRemainingMs())
+			return nextActionWithAllocableMs
+		},
+	})
+}
+
+// export const collectConcurrent = (iterable, allocatedMs = Infinity)
+// export const collectConcurrentWithAllocatedMs = (iterable, allocatedMs = Infinity)

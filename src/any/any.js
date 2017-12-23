@@ -1,21 +1,21 @@
 import { isAction } from "../action.js"
 import { fromFunction } from "../fromFunction/fromFunction.js"
 
-export const any = iterable =>
+export const any = (iterable) =>
 	fromFunction(({ fail, pass }) => {
 		let running = true
 		let someHasFailed = false
 		let lastFailure
 		let count = 0
 		let endedCount = 0
-		const compositePass = value => {
+		const compositePass = (value) => {
 			endedCount++
 			if (running) {
 				running = false
 				pass(value)
 			}
 		}
-		const compositeFail = value => {
+		const compositeFail = (value) => {
 			endedCount++
 			if (running) {
 				lastFailure = value

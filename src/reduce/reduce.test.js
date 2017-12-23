@@ -1,7 +1,7 @@
 import { test } from "@dmail/test-cheap"
 import { createAction } from "../action.js"
-// import { passed } from "../passed/passed.js"
-// import { failed } from "../failed/failed.js"
+import { passed } from "../passed/passed.js"
+import { failed } from "../failed/failed.js"
 import { reduce } from "./reduce.js"
 import { assert, assertPassed, assertResult, assertRunning, assertFailed } from "../assertions.js"
 
@@ -39,11 +39,7 @@ test("reduce.js", ({ ensure }) => {
 		reduce(iterable, (...args) => {
 			calledWith = args
 		})
-		assert.equal(calledWith.length, 4)
-		assert.equal(calledWith[0], firstValue)
-		assert.equal(calledWith[1], secondValue)
-		assert.equal(calledWith[2], 1)
-		assert.equal(calledWith[3], iterable)
+		assert.deepEqual(calledWith, [firstValue, secondValue, 1, iterable])
 	})
 
 	ensure("calls reducer with initialValue and first iterable value when initialValue", () => {
@@ -56,7 +52,7 @@ test("reduce.js", ({ ensure }) => {
 			(...args) => {
 				calledWith = args
 			},
-			initialValue
+			initialValue,
 		)
 		assert.equal(calledWith[0], initialValue)
 		assert.equal(calledWith[1], firstValue)
@@ -99,14 +95,10 @@ test("reduce.js", ({ ensure }) => {
 		assertResult(action, value)
 	})
 
-	ensure("when reducer returns a failed action, reduced action fails", () => {
-		const value = 1
-		const action = reduce([0, 1], () => {
-			const failedAction = createAction()
-			failedAction.fail(value)
-			return failedAction
-		})
+	ensure("when reducer returns an intermediate failed action, reduced action fails", () => {
+		const failure = 1
+		const action = reduce([passed(), failed(failure), passed()], (acc, value) => value)
 		assertFailed(action)
-		assertResult(action, value)
+		assertResult(action, failure)
 	})
 })

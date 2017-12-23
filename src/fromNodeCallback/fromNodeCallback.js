@@ -1,6 +1,6 @@
 import { fromFunction } from "../fromFunction/fromFunction.js"
 
-export const fromNodeCallback = fn => (...args) =>
+export const fromNodeCallback = (fn) => (...args) =>
 	fromFunction(({ pass }) => {
 		fn(...args, (error, data) => {
 			if (error) {

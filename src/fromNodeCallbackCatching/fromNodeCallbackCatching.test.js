@@ -16,9 +16,11 @@ test("fromNodeCallbackCatching.js", ({ ensure }) => {
 	ensure("when callback is errored and catched", () => {
 		const exception = 1
 		const recoverValue = 2
-		const action = fromNodeCallbackCatching(nodeCallbackError, e => e === exception, recoverValue)(
-			exception
-		)
+		const action = fromNodeCallbackCatching(
+			nodeCallbackError,
+			(e) => e === exception,
+			recoverValue,
+		)(exception)
 		assertPassed(action)
 		assertResult(action, recoverValue)
 	})
@@ -27,7 +29,7 @@ test("fromNodeCallbackCatching.js", ({ ensure }) => {
 		const exception = 1
 		assert.throws(
 			() => fromNodeCallbackCatching(nodeCallbackError, () => false)(exception),
-			error => error === exception
+			(error) => error === exception,
 		)
 	})
 })

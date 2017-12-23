@@ -1,18 +1,20 @@
-export const failureIsOutOfMs = failure =>
+export const failureIsOutOfMs = (failure) =>
 	typeof failure === "string" && failure.startsWith("must pass or fail in less")
 
-export const withAllocableMs = ({ fail, shortcircuit, then, isEnded, getState }) => {
+export const allocableMsTalent = ({ fail, shortcircuit, then, isEnded, getState }) => {
 	let timeoutid
 	let allocatedMs = Infinity
 	let startMs
 	let endMs
+
 	const cancelTimeout = () => {
 		if (timeoutid !== undefined) {
 			clearTimeout(timeoutid)
 			timeoutid = undefined
 		}
 	}
-	const allocateMs = ms => {
+
+	const allocateMs = (ms) => {
 		if (isEnded()) {
 			throw new Error(`cannot allocateMs once the action has ${getState()}`)
 		}
@@ -27,10 +29,11 @@ export const withAllocableMs = ({ fail, shortcircuit, then, isEnded, getState })
 			startMs = Date.now()
 			timeoutid = setTimeout(
 				() => shortcircuit(fail, `must pass or fail in less than ${allocatedMs}ms`),
-				allocatedMs
+				allocatedMs,
 			)
 		}
 	}
+
 	const getConsumedMs = () => {
 		if (startMs === undefined) {
 			return undefined
@@ -40,14 +43,20 @@ export const withAllocableMs = ({ fail, shortcircuit, then, isEnded, getState })
 		}
 		return endMs - startMs
 	}
+
 	const getAllocatedMs = () => allocatedMs
+
 	const getRemainingMs = () => (allocatedMs === Infinity ? Infinity : allocatedMs - getConsumedMs())
-	const increaseAllocatedMs = ms => allocateMs(getRemainingMs() + ms)
-	const decreaseAllocatedMs = ms => allocateMs(getRemainingMs() - ms)
+
+	const increaseAllocatedMs = (ms) => allocateMs(getRemainingMs() + ms)
+
+	const decreaseAllocatedMs = (ms) => allocateMs(getRemainingMs() - ms)
+
 	const onEnded = () => {
 		endMs = Date.now()
 		cancelTimeout()
 	}
+
 	then(onEnded, onEnded)
 
 	return {
@@ -56,6 +65,6 @@ export const withAllocableMs = ({ fail, shortcircuit, then, isEnded, getState })
 		getConsumedMs,
 		getRemainingMs,
 		increaseAllocatedMs,
-		decreaseAllocatedMs
+		decreaseAllocatedMs,
 	}
 }

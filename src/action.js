@@ -2,44 +2,59 @@
 // http://folktale.origamitower.com/api/v2.0.0/en/folktale.result.html
 // http://folktale.origamitower.com/api/v2.0.0/en/folktale.validation.html
 
-export const isAction = value => value && typeof value.then === "function"
+import { mixin, pure, hasTalent, replicate } from "@dmail/mixin"
 
-export const createAction = () => {
+export const isThenable = (value) => {
+	if (typeof value === "object" || typeof value === "function") {
+		return typeof value.then === "function"
+	}
+}
+
+const actionTalent = ({ unwrapThenable, valueOf }) => {
 	let state = "unknown"
 	let result
 	let willShortCircuit = false
 	let ignoreNext = false
 
-	const action = {}
 	const isPassing = () => state === "passing"
-	const isFailing = () => state === "failing"
-	const isPassed = () => state === "passed"
-	const isFailed = () => state === "failed"
-	const isRunning = () => state === "unknown" || isPassing() || isFailing()
-	const isEnded = () => isPassed() || isFailed()
-	const pendingActions = []
 
-	const runPendingActions = () => {
-		pendingActions.forEach(pendingAction => {
-			pendingAction.fn(action, result)
-		})
-		pendingActions.length = 0
+	const isFailing = () => state === "failing"
+
+	const isPassed = () => state === "passed"
+
+	const isFailed = () => state === "failed"
+
+	const isRunning = () => state === "unknown" || isPassing() || isFailing()
+
+	const isEnded = () => isPassed() || isFailed()
+
+	const pendingHandlers = []
+
+	const runPendingHandlers = () => {
+		pendingHandlers.forEach((handler) => handler())
+		pendingHandlers.length = 0
 	}
+
 	const handleResult = (value, passing) => {
 		state = passing ? "passing" : "failing"
 
-		if (isAction(value)) {
-			if (value === action) {
+		if (hasTalent(actionTalent, value)) {
+			// it would be a problem if value was an action derived
+			// we should check with something reading getPrototypeOf
+			if (value === valueOf()) {
 				throw new Error("an action cannot pass/fail with itself")
 			}
-			value.then(value => handleResult(value, true), value => handleResult(value, false))
+			value.then((value) => handleResult(value, true), (value) => handleResult(value, false))
+		} else if (unwrapThenable && isThenable(value)) {
+			value.then((value) => handleResult(value, true), (value) => handleResult(value, false))
 		} else {
 			state = passing ? "passed" : "failed"
 			result = value
-			runPendingActions()
+			runPendingHandlers()
 		}
 	}
-	const fail = value => {
+
+	const fail = (value) => {
 		if (ignoreNext) {
 			ignoreNext = false
 			return
@@ -56,7 +71,8 @@ export const createAction = () => {
 		}
 		handleResult(value, false)
 	}
-	const pass = value => {
+
+	const pass = (value) => {
 		if (ignoreNext) {
 			ignoreNext = false
 			return
@@ -73,8 +89,12 @@ export const createAction = () => {
 		}
 		handleResult(value, true)
 	}
+
 	const then = (onPassed, onFailed) => {
-		const nextAction = createAction()
+		// ici il faudrais ptet un lastvalueOf
+		// sinon on replicate juste cette action mais on propage
+		// pas les éventuel talents ajouté dynamiquement après
+		const nextAction = replicate(valueOf())
 		const nextActionHandler = () => {
 			let nextActionResult = result
 
@@ -91,39 +111,24 @@ export const createAction = () => {
 			}
 		}
 		if (isRunning()) {
-			pendingActions.push({
-				fn: nextActionHandler
-			})
+			pendingHandlers.push(nextActionHandler)
 		} else {
 			nextActionHandler()
 		}
 
 		return nextAction
 	}
+
 	const getState = () => state
+
 	const getResult = () => result
+
 	const shortcircuit = (fn, value) => {
 		willShortCircuit = true
 		return fn(value)
 	}
-	const mixin = (...args) => {
-		// maybe allow only function, add use defineProperty to make them non enumerable ?
-		args.forEach(arg => {
-			let properties = typeof arg === "function" ? arg(action) : arg
-			if (properties && typeof properties === "object") {
-				Object.keys(properties).forEach(property => {
-					if (action.hasOwnProperty(property)) {
-						throw new Error(`action mixin error: ${property} property exists`)
-					}
-					action[property] = properties[property]
-				})
-			}
-		})
-		return action
-	}
 
-	return mixin(action, {
-		mixin,
+	return {
 		getState,
 		getResult,
 		isPassing,
@@ -135,9 +140,15 @@ export const createAction = () => {
 		pass,
 		fail,
 		shortcircuit,
-		then
-	})
+		then,
+	}
 }
+
+export const createAction = ({ unwrapThenable = true } = {}) => {
+	return mixin(pure, () => ({ unwrapThenable }), actionTalent)
+}
+
+export const isAction = (value) => hasTalent(actionTalent, value)
 
 // passed("foo").then(console.log)
 

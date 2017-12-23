@@ -1,41 +1,26 @@
-import { passed } from "../passed/passed.js"
-import { fromFunction } from "../fromFunction/fromFunction.js"
+import { compose, createIterator } from "../compose/compose.js"
 
-export const reduce = (iterable, reducer, initialValue) =>
-	fromFunction(() => {
-		const iterator = iterable[Symbol.iterator]()
-		let index = 0
-		let reducedValue
-		let { done, value } = iterator.next()
-
+export const reduce = (iterable, reducer, initialValue) => {
+	const iterator = createIterator(iterable)
+	if (initialValue === undefined) {
+		const { done, value } = iterator.iterate()
 		if (done) {
-			if (initialValue === undefined) {
-				throw new Error("reduce called on empty iterable without initialValue")
-			}
-			return passed(initialValue)
+			throw new Error("reduce called on empty iterable without initialValue")
 		}
-		if (initialValue === undefined) {
-			reducedValue = passed(value)
+		initialValue = value
+	}
 
-			const nextResult = iterator.next()
-			if (nextResult.done) {
-				return reducedValue
+	return compose({
+		from: initialValue,
+		iterator,
+		composer: ({ state, value, nextValue, nextIndex, iterable, done, fail, pass }) => {
+			if (done) {
+				return state === "passed" ? pass(value) : fail(value)
 			}
-			value = nextResult.value
-			index++
-		} else {
-			reducedValue = passed(initialValue)
-		}
-
-		const iterate = currentValue =>
-			reducedValue.then(result => {
-				reducedValue = passed(reducer(result, currentValue, index, iterable))
-				index++
-				const { value, done } = iterator.next()
-				if (done) {
-					return reducedValue
-				}
-				return iterate(value)
-			})
-		return iterate(value)
+			if (state === "passed") {
+				return reducer(value, nextValue, nextIndex, iterable)
+			}
+			return fail(value)
+		},
 	})
+}

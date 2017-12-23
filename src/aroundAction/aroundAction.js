@@ -1,13 +1,13 @@
 export const aroundAction = (before, actionCreator, after) => {
 	before()
 	return actionCreator().then(
-		result => {
+		(result) => {
 			after(result, true)
 			return result
 		},
-		result => {
+		(result) => {
 			after(result, false)
 			return result
-		}
+		},
 	)
 }

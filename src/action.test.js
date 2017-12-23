@@ -1,6 +1,7 @@
-import { test } from "@dmail/test-cheap"
 import { createAction } from "./action.js"
+import { test } from "@dmail/test-cheap"
 import { assert, assertPassed, assertFailed, assertResult } from "./assertions.js"
+import { mixin } from "@dmail/mixin"
 
 test("action.js", ({ ensure }) => {
 	ensure("action.pass(itself) throw", () => {
@@ -90,7 +91,7 @@ test("action.js", ({ ensure }) => {
 	ensure("action.pass(resolvedThenable) pass with resolvedThenable wrapped value", () => {
 		const value = 1
 		const resolvedThenable = {
-			then: onPassed => onPassed(value)
+			then: (onPassed) => onPassed(value),
 		}
 		const action = createAction()
 		action.pass(resolvedThenable)
@@ -101,7 +102,7 @@ test("action.js", ({ ensure }) => {
 	ensure("action.fail(resolvedThenable) pass with resolvedThenable wrapped value", () => {
 		const value = 1
 		const resolvedThenable = {
-			then: onPassed => onPassed(value)
+			then: (onPassed) => onPassed(value),
 		}
 		const action = createAction()
 		action.fail(resolvedThenable)
@@ -112,7 +113,7 @@ test("action.js", ({ ensure }) => {
 	ensure("action.pass(rejectedThenable) fail with rejectedThenable wrapped value", () => {
 		const value = 1
 		const rejectedThenable = {
-			then: (onPassed, onFailed) => onFailed(value)
+			then: (onPassed, onFailed) => onFailed(value),
 		}
 		const action = createAction()
 		action.pass(rejectedThenable)
@@ -123,7 +124,7 @@ test("action.js", ({ ensure }) => {
 	ensure("action.fail(rejectedThenable) fail with rejectedThenable wrapped value", () => {
 		const value = 1
 		const rejectedThenable = {
-			then: (onPassed, onFailed) => onFailed(value)
+			then: (onPassed, onFailed) => onFailed(value),
 		}
 		const action = createAction()
 		action.fail(rejectedThenable)
@@ -131,12 +132,21 @@ test("action.js", ({ ensure }) => {
 		assertResult(action, value)
 	})
 
+	ensure("action.fail(failedAction), fail with action wrapped value", () => {
+		const failedAction = createAction()
+		failedAction.fail(10)
+		const action = createAction()
+		action.fail(failedAction)
+		assertFailed(action)
+		assertResult(action, 10)
+	})
+
 	ensure("action.then(onPass) call onpass immediatly when passed", () => {
 		const action = createAction()
 		const value = 1
 		action.pass(value)
 		let passedValue
-		action.then(value => {
+		action.then((value) => {
 			passedValue = value
 		})
 		assert.equal(passedValue, value)
@@ -146,7 +156,7 @@ test("action.js", ({ ensure }) => {
 		const action = createAction()
 		const value = 1
 		let passedValue
-		action.then(value => {
+		action.then((value) => {
 			passedValue = value
 		})
 		assert.equal(passedValue, undefined)
@@ -159,7 +169,7 @@ test("action.js", ({ ensure }) => {
 		const value = 1
 		action.fail(value)
 		let failedValue
-		action.then(null, value => {
+		action.then(null, (value) => {
 			failedValue = value
 		})
 		assert.equal(failedValue, value)
@@ -169,7 +179,7 @@ test("action.js", ({ ensure }) => {
 		const action = createAction()
 		const value = 1
 		let failedValue
-		action.then(null, value => {
+		action.then(null, (value) => {
 			failedValue = value
 		})
 		assert.equal(failedValue, undefined)
@@ -195,35 +205,19 @@ test("action.js", ({ ensure }) => {
 		assertResult(nextAction, value)
 	})
 
-	ensure("action.mixin add property to action", () => {
+	ensure("pass on talentedAction", () => {
 		const action = createAction()
-		const foo = () => {}
-		action.mixin({ foo })
-		assert.equal(action.foo, foo)
-	})
-
-	ensure("action.mixin throw on existing property", () => {
-		const action = createAction()
-		assert.throws(() => action.mixin({ pass: () => {} }))
-	})
-
-	ensure("action mixin with a function", () => {
-		const action = createAction()
-		let firstArg
-		const foo = () => {}
-		action.mixin(arg => {
-			firstArg = arg
-			return { foo }
+		const passedValues = []
+		action.then((value) => {
+			passedValues.push(value)
 		})
-		assert.equal(firstArg, action)
-		assert.equal(action.foo, foo)
-	})
-
-	ensure("action mixin can return null", () => {
-		createAction().mixin(() => null)
-	})
-
-	ensure("action mixin returning non object are ignored", () => {
-		createAction().mixin(() => true)
+		const talentedAction = mixin(action, () => ({ foo: true }))
+		talentedAction.then((value) => {
+			passedValues.push(value)
+		})
+		talentedAction.pass("yo")
+		assertPassed(action)
+		assertPassed(talentedAction)
+		assert.deepEqual(passedValues, ["yo", "yo"])
 	})
 })

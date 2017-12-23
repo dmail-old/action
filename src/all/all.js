@@ -1,7 +1,7 @@
 import { isAction } from "../action.js"
 import { fromFunction } from "../fromFunction/fromFunction.js"
 
-export const all = iterable =>
+export const all = (iterable) =>
 	fromFunction(({ fail, pass }) => {
 		let callCount = 0
 		let passedCount = 0
@@ -16,7 +16,7 @@ export const all = iterable =>
 				pass(results)
 			}
 		}
-		const compositeOnFailed = result => {
+		const compositeOnFailed = (result) => {
 			if (failedOrPassed === false) {
 				failedOrPassed = true
 				fail(result)
@@ -24,7 +24,7 @@ export const all = iterable =>
 		}
 		const run = (value, index) => {
 			if (isAction(value)) {
-				value.then(result => compositeOnPassed(result, index), compositeOnFailed)
+				value.then((result) => compositeOnPassed(result, index), compositeOnFailed)
 			} else {
 				compositeOnPassed(value, index)
 			}

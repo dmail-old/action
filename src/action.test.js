@@ -9,12 +9,22 @@ test("action.js", ({ ensure }) => {
 		assert.throws(() => {
 			action.pass(action)
 		})
+
+		const otherAction = createAction()
+		assert.throws(() => {
+			action.pass(Object.create(otherAction))
+		})
 	})
 
 	ensure("action.fail(itself) throw", () => {
 		const action = createAction()
 		assert.throws(() => {
 			action.fail(action)
+		})
+
+		const otherAction = createAction()
+		assert.throws(() => {
+			action.fail(Object.create(otherAction))
 		})
 	})
 

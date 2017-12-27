@@ -2,18 +2,19 @@
 // http://folktale.origamitower.com/api/v2.0.0/en/folktale.result.html
 // http://folktale.origamitower.com/api/v2.0.0/en/folktale.validation.html
 
-import { createFactory, pure, replicate, isProductOf } from "@dmail/mixin"
+import { createFactory, pure, replicate, isProductOf, isComposedOf } from "@dmail/mixin"
 
 export const isThenable = (value) => {
 	if (typeof value === "object" || typeof value === "function") {
 		return typeof value.then === "function"
 	}
+	return false
 }
 
 export const createAction = createFactory(
 	pure,
 	({ unwrapThenable = true } = {}) => ({ unwrapThenable }),
-	({ unwrapThenable, valueOf, lastValueOf }) => {
+	({ unwrapThenable, getComposite, getLastComposite }) => {
 		let state = "unknown"
 		let result
 		let willShortCircuit = false
@@ -42,9 +43,8 @@ export const createAction = createFactory(
 			state = passing ? "passing" : "failing"
 
 			if (isProductOf(createAction, value)) {
-				// it would be a problem if value was an action derived
-				// we should check with something reading getPrototypeOf
-				if (value === valueOf()) {
+				const action = getComposite()
+				if (value === action || isComposedOf(action, value)) {
 					throw new Error("an action cannot pass/fail with itself")
 				}
 				value.then((value) => handleResult(value, true), (value) => handleResult(value, false))
@@ -94,10 +94,8 @@ export const createAction = createFactory(
 		}
 
 		const then = (onPassed, onFailed) => {
-			// ici il faudrais ptet un lastvalueOf
-			// sinon on replicate juste cette action mais on propage
-			// pas les éventuel talents ajouté dynamiquement après
-			const nextAction = replicate(lastValueOf())
+			const nextAction = replicate(getLastComposite())
+
 			const nextActionHandler = () => {
 				let nextActionResult = result
 
@@ -113,6 +111,7 @@ export const createAction = createFactory(
 					nextAction.pass(nextActionResult)
 				}
 			}
+
 			if (isRunning()) {
 				pendingHandlers.push(nextActionHandler)
 			} else {

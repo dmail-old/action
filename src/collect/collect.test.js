@@ -121,7 +121,7 @@ test("collect.js", ({ ensure }) => {
 		clock.tick(8)
 		secondAction.pass("b")
 		assertFailed(collectAction)
-		assert.deepEqual(collectAction.getResult(), "must pass or fail in less than 8ms")
+		assert.deepEqual(collectAction.getResult(), "must pass or fail in less than 10ms")
 		clock.uninstall()
 	})
 

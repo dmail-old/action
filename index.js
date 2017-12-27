@@ -14,3 +14,5 @@ export * from "./src/mapFailed/mapFailed.js"
 export * from "./src/passed/passed.js"
 export * from "./src/reduce/reduce.js"
 export * from "./src/sequence/sequence.js"
+
+export * from "./src/mapIterable.js"

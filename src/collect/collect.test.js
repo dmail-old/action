@@ -59,6 +59,14 @@ test("collect.js", ({ ensure }) => {
 		assertResult(action, 1)
 	})
 
+	ensure("with action already passed", () => {
+		const collectAction = collectSequenceWithAllocatedMs([passed(1)], {
+			allocatedMs: 10,
+		})
+		assertPassed(collectAction)
+		assert.deepEqual(collectAction.getResult(), [{ state: "passed", result: 1 }])
+	})
+
 	ensure("action passed in time", () => {
 		const clock = install()
 		const action = createAction()

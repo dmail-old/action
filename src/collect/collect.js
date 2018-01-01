@@ -5,7 +5,6 @@ import {
 } from "../allocableMsTalent/allocableMsTalent.js"
 import { mixin } from "@dmail/mixin"
 import { createAction } from "../action"
-import { passed } from "../passed/passed.js"
 import { createIterator, compose } from "../compose/compose.js"
 
 export const collectSequence = (iterable, { failureIsCritical = () => false } = {}) => {
@@ -35,10 +34,9 @@ export const collectSequence = (iterable, { failureIsCritical = () => false } = 
 	})
 }
 
-const createPassedActionWithAllocatedMs = (allocatedMs) => {
+const createActionWithAllocatedMs = (allocatedMs) => {
 	const action = mixin(createAction(), allocableMsTalent)
 	action.allocateMs(allocatedMs)
-	action.pass()
 	return action
 }
 
@@ -46,8 +44,11 @@ export const collectSequenceWithAllocatedMs = (iterable, { allocatedMs = Infinit
 	const results = []
 	let someHasFailed = false
 
+	const from = createActionWithAllocatedMs(allocatedMs)
+	from.pass()
+
 	return compose({
-		from: createPassedActionWithAllocatedMs(allocatedMs),
+		from,
 		iterator: createIterator(iterable),
 		composer: ({ action, value, state, index, nextValue, done, fail, pass }) => {
 			if (index > -1) {
@@ -80,9 +81,11 @@ export const collectSequenceWithAllocatedMs = (iterable, { allocatedMs = Infinit
 			// soit then n'utilise pas lastValueOf
 			// soit c'est l'utilisation même du then qui est foireuse
 
-			const nextActionWithAllocableMs = mixin(passed(nextValue), allocableMsTalent)
-			nextActionWithAllocableMs.allocateMs(action.getRemainingMs())
-			return nextActionWithAllocableMs
+			const nextAction = createActionWithAllocatedMs()
+			nextAction.allocateMs(action.getRemainingMs())
+			nextAction.pass(nextValue)
+
+			return nextAction
 		},
 	})
 }

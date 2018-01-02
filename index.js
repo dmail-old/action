@@ -1,6 +1,7 @@
 export * from "./src/action.js"
 
 export * from "./src/all/all.js"
+export * from "./src/allocableMsTalent/allocableMsTalent.js"
 export * from "./src/any/any.js"
 export * from "./src/aroundAction/aroundAction.js"
 export * from "./src/compose/compose.js"

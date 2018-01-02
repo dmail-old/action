@@ -1,4 +1,4 @@
-import { allocableMsTalent, failureIsOutOfMs } from "./allocableMsTalent.js"
+import { allocableMsTalent } from "./allocableMsTalent.js"
 import { createAction } from "../action.js"
 import { mixin } from "@dmail/mixin"
 import { test } from "@dmail/test-cheap"
@@ -55,10 +55,10 @@ test("withAllocableMs.js", ({ ensure }) => {
 	ensure("an action call pass too late", () => {
 		const clock = install()
 		const action = createActionWithAllocableMs()
-		action.allocateMs(10)
+		const token = action.allocateMs(10)
 		setTimeout(action.pass, 11)
 		clock.tick(10)
-		assert(failureIsOutOfMs(action.getResult()))
+		assert.equal(action.getResult(), token)
 		assert.doesNotThrow(() => clock.tick(1))
 		clock.uninstall()
 	})
@@ -66,19 +66,19 @@ test("withAllocableMs.js", ({ ensure }) => {
 	ensure("an action call fail too late", () => {
 		const clock = install()
 		const action = createActionWithAllocableMs()
-		action.allocateMs(10)
+		const token = action.allocateMs(10)
 		setTimeout(action.fail, 11)
 		clock.tick(10)
-		assert(failureIsOutOfMs(action.getResult()))
+		assert.equal(action.getResult(), token)
 		assert.doesNotThrow(() => clock.tick(1))
 		clock.uninstall()
 	})
 
 	ensure("allocateMs called with negative ms", () => {
 		const action = createActionWithAllocableMs()
-		action.allocateMs(-1)
+		const token = action.allocateMs(-1)
 		assert.equal(action.getState(), "failed")
-		assert(failureIsOutOfMs(action.getResult()))
+		assert.equal(action.getResult(), token)
 	})
 
 	ensure("allocateMs() throw when action is passed", () => {

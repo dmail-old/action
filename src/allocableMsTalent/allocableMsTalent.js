@@ -1,6 +1,3 @@
-export const failureIsOutOfMs = (failure) =>
-	typeof failure === "string" && failure.startsWith("must pass or fail in less")
-
 export const createOutOfMsMessage = (allocatedMs) => {
 	return `must pass or fail in less than ${allocatedMs}ms`
 }
@@ -19,6 +16,11 @@ export const allocableMsTalent = ({ fail, shortcircuit, then, isEnded, getState 
 	}
 
 	const allocateMs = (ms) => {
+		const outOfMsToken = {
+			ms,
+			toString: () => createOutOfMsMessage(ms),
+		}
+
 		if (isEnded()) {
 			throw new Error(`cannot allocateMs once the action has ${getState()}`)
 		}
@@ -28,14 +30,13 @@ export const allocableMsTalent = ({ fail, shortcircuit, then, isEnded, getState 
 		cancelTimeout()
 
 		if (allocatedMs < 0) {
-			shortcircuit(fail, createOutOfMsMessage(allocatedMs))
+			shortcircuit(fail, outOfMsToken)
 		} else if (allocatedMs !== Infinity) {
 			startMs = Date.now()
-			timeoutid = setTimeout(
-				() => shortcircuit(fail, createOutOfMsMessage(allocatedMs)),
-				allocatedMs,
-			)
+			timeoutid = setTimeout(() => shortcircuit(fail, outOfMsToken), allocatedMs)
 		}
+
+		return outOfMsToken
 	}
 
 	const getConsumedMs = () => {

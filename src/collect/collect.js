@@ -1,8 +1,4 @@
-import {
-	allocableMsTalent,
-	failureIsOutOfMs,
-	createOutOfMsMessage,
-} from "../allocableMsTalent/allocableMsTalent.js"
+import { allocableMsTalent, createOutOfMsMessage } from "../allocableMsTalent/allocableMsTalent.js"
 import { mixin } from "@dmail/mixin"
 import { createAction } from "../action"
 import { createIterator, compose } from "../compose/compose.js"
@@ -34,17 +30,16 @@ export const collectSequence = (iterable, { failureIsCritical = () => false } = 
 	})
 }
 
-const createActionWithAllocatedMs = (allocatedMs) => {
-	const action = mixin(createAction(), allocableMsTalent)
-	action.allocateMs(allocatedMs)
-	return action
+export const createActionWithAllocableMs = () => {
+	return mixin(createAction(), allocableMsTalent)
 }
 
 export const collectSequenceWithAllocatedMs = (iterable, { allocatedMs = Infinity } = {}) => {
 	const results = []
 	let someHasFailed = false
 
-	const from = createActionWithAllocatedMs(allocatedMs)
+	const from = createActionWithAllocableMs(allocatedMs)
+	let currentExpirationToken = from.allocateMs(allocatedMs)
 	from.pass()
 
 	return compose({
@@ -56,7 +51,7 @@ export const collectSequenceWithAllocatedMs = (iterable, { allocatedMs = Infinit
 				results.push({ state, result: value })
 			}
 			if (state === "failed") {
-				if (failureIsOutOfMs(value)) {
+				if (value === currentExpirationToken) {
 					// fail saying we are out of 10ms
 					// even if the action may say it failed because it had only 8ms
 					// because the composedAction has 10ms
@@ -72,17 +67,8 @@ export const collectSequenceWithAllocatedMs = (iterable, { allocatedMs = Infinit
 				return pass(results)
 			}
 
-			// ah bah oui allocableMsTalent apelle then
-			// qui apelle replicate sur lastValueOf
-			// qui du coup rapelle allocableMsTalent
-			// dans une boucle infinie
-			// le then qu'on utilise dans allocableMsTalent
-			// ne "devrait" par réappliquer le talent
-			// soit then n'utilise pas lastValueOf
-			// soit c'est l'utilisation même du then qui est foireuse
-
-			const nextAction = createActionWithAllocatedMs()
-			nextAction.allocateMs(action.getRemainingMs())
+			const nextAction = createActionWithAllocableMs()
+			currentExpirationToken = nextAction.allocateMs(action.getRemainingMs())
 			nextAction.pass(nextValue)
 
 			return nextAction

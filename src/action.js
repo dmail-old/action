@@ -5,6 +5,9 @@
 import { createFactory, pure, replicate, isProductOf, isComposedOf } from "@dmail/mixin"
 
 export const isThenable = (value) => {
+	if (value === null) {
+		return false
+	}
 	if (typeof value === "object" || typeof value === "function") {
 		return typeof value.then === "function"
 	}

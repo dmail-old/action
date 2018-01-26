@@ -1,6 +1,6 @@
 {
 	"name": "@dmail/action",
-	"version": "2.4.0",
+	"version": "3.0.0",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -19,7 +19,7 @@
 		"node": ">=8.6.0"
 	},
 	"dependencies": {
-		"@dmail/mixin": "5.6.0"
+		"@dmail/mixin": "6.0.0"
 	},
 	"devDependencies": {
 		"@dmail/ensure": "0.0.2",

@@ -1,5 +1,5 @@
+import { createAction } from "../action.js"
 import { passed } from "../passed/passed.js"
-import { fromFunction } from "../fromFunction/fromFunction.js"
 
 export const createIterator = (iterable) => {
 	const iterator = iterable[Symbol.iterator]()
@@ -24,71 +24,74 @@ export const createIterator = (iterable) => {
 }
 
 export const compose = ({ from, iterator, composer }) => {
-	return fromFunction(({ fail, pass }) => {
-		const { iterable, iterate } = iterator
+	const action = createAction()
+	const { pass, fail } = action
 
-		let pending = true
+	const { iterable, iterate } = iterator
 
-		const breakAndPass = (value) => {
-			pending = false
-			pass(value)
-		}
+	let pending = true
 
-		const breakAndFail = (value) => {
-			pending = false
-			fail(value)
-		}
+	const breakAndPass = (value) => {
+		pending = false
+		pass(value)
+	}
 
-		const unwrap = (value, handler) => {
-			const action = passed(value)
-			action.then(
-				(value) => handler(action, value, "passed"),
-				(value) => handler(action, value, "failed"),
-			)
-		}
+	const breakAndFail = (value) => {
+		pending = false
+		fail(value)
+	}
 
-		const handleUnknown = (action, value, state) => {
-			const { done, value: nextValue, index: nextIndex } = iterate()
+	const unwrap = (value, handler) => {
+		const action = passed(value)
+		action.then(
+			(value) => handler(action, value, "passed"),
+			(value) => handler(action, value, "failed"),
+		)
+	}
 
-			const composerResult = composer({
-				index: nextIndex - 1,
-				nextIndex,
-				value,
-				nextValue,
-				action,
-				state,
-				iterable,
-				done,
-				pass: breakAndPass,
-				fail: breakAndFail,
-			})
+	const handleUnknown = (action, value, state) => {
+		const { done, value: nextValue, index: nextIndex } = iterate()
 
-			if (pending) {
-				if (done) {
-					const handleLast = (action, value, state) => {
-						composer({
-							index: nextIndex,
-							nextIndex: nextIndex + 1,
-							value,
-							nextValue: undefined,
-							action,
-							state,
-							iterable,
-							done,
-							pass: breakAndPass,
-							fail: breakAndFail,
-						})
-						if (pending) {
-							throw new Error("composer must fail or pass when iteration is done")
-						}
+		const composerResult = composer({
+			index: nextIndex - 1,
+			nextIndex,
+			value,
+			nextValue,
+			action,
+			state,
+			iterable,
+			done,
+			pass: breakAndPass,
+			fail: breakAndFail,
+		})
+
+		if (pending) {
+			if (done) {
+				const handleLast = (action, value, state) => {
+					composer({
+						index: nextIndex,
+						nextIndex: nextIndex + 1,
+						value,
+						nextValue: undefined,
+						action,
+						state,
+						iterable,
+						done,
+						pass: breakAndPass,
+						fail: breakAndFail,
+					})
+					if (pending) {
+						throw new Error("composer must fail or pass when iteration is done")
 					}
-					unwrap(composerResult, handleLast)
-				} else {
-					unwrap(composerResult, handleUnknown)
 				}
+				unwrap(composerResult, handleLast)
+			} else {
+				unwrap(composerResult, handleUnknown)
 			}
 		}
+	}
 
-		unwrap(from, handleUnknown)
-	})
+	unwrap(from, handleUnknown)
+
+	return action
 }

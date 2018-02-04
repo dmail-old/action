@@ -1,16 +1,19 @@
-import { fromFunction } from "../fromFunction/fromFunction.js"
+import { createAction } from "../action.js"
 
-export const fromNodeCallbackCatching = (fn, catchCondition, recoverValue) => (...args) =>
-	fromFunction(({ pass }) => {
-		fn(...args, (error, data) => {
-			if (error) {
-				if (catchCondition(error)) {
-					pass(recoverValue)
-				} else {
-					throw error
-				}
+export const fromNodeCallbackCatching = (fn, catchPredicate, recoverValue) => (...args) => {
+	const action = createAction()
+
+	fn(...args, (error, data) => {
+		if (error) {
+			if (catchPredicate(error)) {
+				action.pass(recoverValue)
 			} else {
-				pass(data)
+				throw error
 			}
-		})
+		} else {
+			action.pass(data)
+		}
 	})
+
+	return action
+}

@@ -9,5 +9,6 @@ export const fromFunction = (fn) => {
 
 	const action = createAction()
 	action.pass(returnValue)
+
 	return action
 }

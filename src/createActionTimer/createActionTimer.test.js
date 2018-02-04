@@ -4,7 +4,7 @@ import { test } from "@dmail/test-cheap"
 import { install } from "lolex"
 import { assert } from "../assertions.js"
 
-test("withAllocableMs.js", ({ ensure }) => {
+test("createActionTimer.js", ({ ensure }) => {
 	const createActionAndTimer = () => {
 		const action = createAction()
 		const timer = createActionTimer(action)

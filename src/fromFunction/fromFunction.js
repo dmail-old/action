@@ -1,15 +1,14 @@
-import { isAction, isThenable, createAction } from "../action.js"
+import { createAction, isAction } from "../action.js"
 
 export const fromFunction = (fn) => {
-	const action = createAction()
-	const returnValue = fn(action)
-	if (returnValue === action) {
-		return action
-	}
+	const returnValue = fn()
+
 	if (isAction(returnValue)) {
-		returnValue.then(action.pass, action.fail)
-	} else if (isThenable(returnValue)) {
-		returnValue.then(action.pass, action.fail)
+		return returnValue
 	}
+
+	const action = createAction()
+	action.pass(returnValue)
+
 	return action
 }

@@ -1,4 +1,12 @@
-import { isAction } from "../action.js"
-import { fromFunction } from "../fromFunction/fromFunction.js"
+import { isAction, createAction } from "../action.js"
 
-export const passed = (value) => (isAction(value) ? value : fromFunction(({ pass }) => pass(value)))
+export const passed = (value) => {
+	if (isAction(value)) {
+		return value
+	}
+
+	const action = createAction()
+	action.pass(value)
+
+	return action
+}

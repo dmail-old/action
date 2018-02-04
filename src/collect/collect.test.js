@@ -12,12 +12,14 @@ test("collect.js", ({ ensure }) => {
 		const action = createAction()
 		const collectAction = collectSequence([action])
 		action.pass()
+
 		assertPassed(collectAction)
 	})
 
 	ensure("with values", () => {
 		const action = collectSequence([0, 1])
 		assertPassed(action)
+
 		assert.deepEqual(action.getResult(), [
 			{ state: "passed", result: 0 },
 			{ state: "passed", result: 1 },
@@ -26,6 +28,7 @@ test("collect.js", ({ ensure }) => {
 
 	ensure("with passed actions", () => {
 		const action = collectSequence([passed(0), passed(1)])
+
 		assertPassed(action)
 		assert.deepEqual(action.getResult(), [
 			{ state: "passed", result: 0 },
@@ -35,6 +38,7 @@ test("collect.js", ({ ensure }) => {
 
 	ensure("with failed actions", () => {
 		const action = collectSequence([failed(0), failed(1)])
+
 		assertFailed(action)
 		assert.deepEqual(action.getResult(), [
 			{ state: "failed", result: 0 },
@@ -44,6 +48,7 @@ test("collect.js", ({ ensure }) => {
 
 	ensure("with a mix of failed and passed actions", () => {
 		const action = collectSequence([passed(0), failed(1), passed(2)])
+
 		assert.deepEqual(action.getResult(), [
 			{ state: "passed", result: 0 },
 			{ state: "failed", result: 1 },
@@ -55,6 +60,7 @@ test("collect.js", ({ ensure }) => {
 		const action = collectSequence([failed(0), failed(1), passed(2)], {
 			failureIsCritical: (failure) => failure === 1,
 		})
+
 		assertFailed(action)
 		assertResult(action, 1)
 	})
@@ -63,6 +69,7 @@ test("collect.js", ({ ensure }) => {
 		const collectAction = collectSequenceWithAllocatedMs([passed(1)], {
 			allocatedMs: 10,
 		})
+
 		assertPassed(collectAction)
 		assert.deepEqual(collectAction.getResult(), [{ state: "passed", result: 1 }])
 	})
@@ -75,23 +82,29 @@ test("collect.js", ({ ensure }) => {
 		})
 		clock.tick(5)
 		action.pass("hello")
+
 		assertPassed(collectAction)
 		assert.deepEqual(collectAction.getResult(), [{ state: "passed", result: "hello" }])
 		clock.tick(10)
+
+		clock.uninstall()
 	})
 
 	ensure("action taking too long to pass", () => {
 		const clock = install()
+
 		const action = createAction()
 		const collectAction = collectSequenceWithAllocatedMs([action], {
 			allocatedMs: 10,
 		})
-
 		clock.tick(2)
+
 		assertRunning(collectAction)
+
 		clock.tick(8)
+
 		assertFailed(collectAction)
-		assertResult(collectAction, `must pass or fail in less than 10ms`)
+		assertResult(collectAction, `must terminates in less than 10ms`)
 
 		action.pass()
 
@@ -100,6 +113,7 @@ test("collect.js", ({ ensure }) => {
 
 	ensure("first action fails in 2ms, next fails in 7ms having 10ms", () => {
 		const clock = install()
+
 		const firstAction = createAction()
 		const secondAction = createAction()
 		const collectAction = collectSequenceWithAllocatedMs([firstAction, secondAction], {
@@ -109,16 +123,19 @@ test("collect.js", ({ ensure }) => {
 		firstAction.fail("a")
 		clock.tick(7)
 		secondAction.fail("b")
+
 		assertFailed(collectAction)
 		assert.deepEqual(collectAction.getResult(), [
 			{ state: "failed", result: "a" },
 			{ state: "failed", result: "b" },
 		])
+
 		clock.uninstall()
 	})
 
 	ensure("first action passed in 2ms, next pass in 8ms having 10ms", () => {
 		const clock = install()
+
 		const firstAction = createAction()
 		const secondAction = createAction()
 		const collectAction = collectSequenceWithAllocatedMs([firstAction, secondAction], {
@@ -128,16 +145,21 @@ test("collect.js", ({ ensure }) => {
 		firstAction.pass("a")
 		clock.tick(8)
 		secondAction.pass("b")
+
 		assertFailed(collectAction)
-		assert.deepEqual(collectAction.getResult(), "must pass or fail in less than 10ms")
+		assert.deepEqual(collectAction.getResult(), "must terminates in less than 10ms")
+
 		clock.uninstall()
 	})
 
 	ensure("allocatedMs is very big dy default (actually it's infinity)", () => {
 		const clock = install()
+
 		const collectAction = collectSequenceWithAllocatedMs([createAction()])
 		clock.tick(10000000)
+
 		assertRunning(collectAction)
+
 		clock.uninstall()
 	})
 })

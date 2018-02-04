@@ -1,44 +1,55 @@
 import { createAction } from "./action.js"
 import { test } from "@dmail/test-cheap"
 import { assert, assertPassed, assertFailed, assertResult } from "./assertions.js"
-import { mixin } from "@dmail/mixin"
 
 test("action.js", ({ ensure }) => {
-	ensure("action.pass(itself) throw", () => {
+	ensure("pass(itself) throw", () => {
 		const action = createAction()
+
 		assert.throws(() => {
 			action.pass(action)
 		})
+	})
 
-		const otherAction = createAction()
+	ensure("pass(compositeOfItSelf)", () => {
+		const action = createAction()
+		const otherAction = Object.create(action)
+
 		assert.throws(() => {
-			action.pass(Object.create(otherAction))
+			action.pass(otherAction)
 		})
 	})
 
-	ensure("action.fail(itself) throw", () => {
+	ensure("fail(itself) throw", () => {
 		const action = createAction()
+
 		assert.throws(() => {
 			action.fail(action)
 		})
+	})
 
-		const otherAction = createAction()
+	ensure("fail(compositeOfItself)", () => {
+		const action = createAction()
+		const otherAction = Object.create(action)
+
 		assert.throws(() => {
-			action.fail(Object.create(otherAction))
+			action.fail(otherAction)
 		})
 	})
 
-	ensure("action.pass throw when called more than once", () => {
+	ensure("pass throw when called more than once", () => {
 		const action = createAction()
 		action.pass()
+
 		assert.throws(() => {
 			action.pass()
 		})
 	})
 
-	ensure("action.shortcircuit(action.pass) prevent next pass throw", () => {
+	ensure("shortcircuit(pass) prevent next pass throw", () => {
 		const action = createAction()
 		action.shortcircuit(action.pass, "foo")
+
 		assertPassed(action)
 		assertResult(action, "foo")
 		assert.doesNotThrow(action.pass)
@@ -47,9 +58,10 @@ test("action.js", ({ ensure }) => {
 		assertResult(action, "foo")
 	})
 
-	ensure("action.shortcircuit(action.fail) prevent next fail throw", () => {
+	ensure("shortcircuit(fail) prevent next fail throw", () => {
 		const action = createAction()
 		action.shortcircuit(action.fail, "foo")
+
 		assertFailed(action)
 		assertResult(action, "foo")
 		assert.doesNotThrow(action.fail)
@@ -58,17 +70,19 @@ test("action.js", ({ ensure }) => {
 		assertResult(action, "foo")
 	})
 
-	ensure("action.shortcircuit(action.pass) prevent next fail throw", () => {
+	ensure("shortcircuit(pass) prevent next fail throw", () => {
 		const action = createAction()
 		action.shortcircuit(action.pass)
+
 		assert.doesNotThrow(action.fail)
 		assert.throws(action.pass)
 		assert.throws(action.fail)
 	})
 
-	ensure("action.shortcircuit(action.fail) prevent next pass throw", () => {
+	ensure("shortcircuit(fail) prevent next pass throw", () => {
 		const action = createAction()
 		action.shortcircuit(action.fail)
+
 		assert.doesNotThrow(action.pass)
 		assert.throws(action.pass)
 		assert.throws(action.fail)
@@ -77,6 +91,7 @@ test("action.js", ({ ensure }) => {
 	ensure("action.fail throw when called more than once", () => {
 		const action = createAction()
 		action.fail()
+
 		assert.throws(() => {
 			action.fail()
 		})
@@ -85,6 +100,7 @@ test("action.js", ({ ensure }) => {
 	ensure("action.pass throw when called after action.fail", () => {
 		const action = createAction()
 		action.fail()
+
 		assert.throws(() => {
 			action.pass()
 		})
@@ -93,53 +109,10 @@ test("action.js", ({ ensure }) => {
 	ensure("action.fail throw when called after action.pass", () => {
 		const action = createAction()
 		action.pass()
+
 		assert.throws(() => {
 			action.fail()
 		})
-	})
-
-	ensure("action.pass(resolvedThenable) pass with resolvedThenable wrapped value", () => {
-		const value = 1
-		const resolvedThenable = {
-			then: (onPassed) => onPassed(value),
-		}
-		const action = createAction()
-		action.pass(resolvedThenable)
-		assertPassed(action)
-		assertResult(action, value)
-	})
-
-	ensure("action.fail(resolvedThenable) pass with resolvedThenable wrapped value", () => {
-		const value = 1
-		const resolvedThenable = {
-			then: (onPassed) => onPassed(value),
-		}
-		const action = createAction()
-		action.fail(resolvedThenable)
-		assertPassed(action)
-		assertResult(action, value)
-	})
-
-	ensure("action.pass(rejectedThenable) fail with rejectedThenable wrapped value", () => {
-		const value = 1
-		const rejectedThenable = {
-			then: (onPassed, onFailed) => onFailed(value),
-		}
-		const action = createAction()
-		action.pass(rejectedThenable)
-		assertFailed(action)
-		assertResult(action, value)
-	})
-
-	ensure("action.fail(rejectedThenable) fail with rejectedThenable wrapped value", () => {
-		const value = 1
-		const rejectedThenable = {
-			then: (onPassed, onFailed) => onFailed(value),
-		}
-		const action = createAction()
-		action.fail(rejectedThenable)
-		assertFailed(action)
-		assertResult(action, value)
 	})
 
 	ensure("action.fail(failedAction), fail with action wrapped value", () => {
@@ -151,7 +124,7 @@ test("action.js", ({ ensure }) => {
 		assertResult(action, 10)
 	})
 
-	ensure("action.then(onPass) call onpass immediatly when passed", () => {
+	ensure("then(onPass) call onpass immediatly when passed", () => {
 		const action = createAction()
 		const value = 1
 		action.pass(value)
@@ -159,6 +132,7 @@ test("action.js", ({ ensure }) => {
 		action.then((value) => {
 			passedValue = value
 		})
+
 		assert.equal(passedValue, value)
 	})
 
@@ -169,8 +143,11 @@ test("action.js", ({ ensure }) => {
 		action.then((value) => {
 			passedValue = value
 		})
+
 		assert.equal(passedValue, undefined)
+
 		action.pass(value)
+
 		assert.equal(passedValue, value)
 	})
 
@@ -182,6 +159,7 @@ test("action.js", ({ ensure }) => {
 		action.then(null, (value) => {
 			failedValue = value
 		})
+
 		assert.equal(failedValue, value)
 	})
 
@@ -192,8 +170,11 @@ test("action.js", ({ ensure }) => {
 		action.then(null, (value) => {
 			failedValue = value
 		})
+
 		assert.equal(failedValue, undefined)
+
 		action.fail(value)
+
 		assert.equal(failedValue, value)
 	})
 
@@ -202,6 +183,7 @@ test("action.js", ({ ensure }) => {
 		const nextAction = action.then()
 		const value = 1
 		action.pass(value)
+
 		assertPassed(nextAction)
 		assertResult(nextAction, value)
 	})
@@ -211,23 +193,30 @@ test("action.js", ({ ensure }) => {
 		const nextAction = action.then()
 		const value = 1
 		action.fail(value)
+
 		assertFailed(nextAction)
 		assertResult(nextAction, value)
 	})
 
-	ensure("pass on talentedAction", () => {
+	ensure("action.pass(resolvedThenable) pass with a thenable", () => {
+		const resolvedThenable = {
+			then: () => {},
+		}
 		const action = createAction()
-		const passedValues = []
-		action.then((value) => {
-			passedValues.push(value)
-		})
-		const talentedAction = mixin(action, () => ({ foo: true }))
-		talentedAction.then((value) => {
-			passedValues.push(value)
-		})
-		talentedAction.pass("yo")
+		action.pass(resolvedThenable)
+
 		assertPassed(action)
-		assertPassed(talentedAction)
-		assert.deepEqual(passedValues, ["yo", "yo"])
+		assertResult(action, resolvedThenable)
+	})
+
+	ensure("action.fail(resolvedThenable) pass with resolvedThenable wrapped value", () => {
+		const resolvedThenable = {
+			then: () => {},
+		}
+		const action = createAction()
+		action.fail(resolvedThenable)
+
+		assertFailed(action)
+		assertResult(action, resolvedThenable)
 	})
 })
